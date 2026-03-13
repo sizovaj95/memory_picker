@@ -1,0 +1,42 @@
+{
+  "FeatureId": "02",
+  "FeatureName": "Media inventory",
+  "Description": "Scan the flat trip root and classify each top-level file before any moves happen.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Scan flat trip root",
+      "StoryDescription": "Enumerate top-level files from the selected trip root while skipping managed folders and nested directories.",
+      "AcceptanceCriteria": "The scanner returns a deterministic list of top-level files and ignores managed folders.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Classify files by extension",
+      "StoryDescription": "Classify each discovered file as supported photo, non-photo artifact, or unsupported item using extension rules.",
+      "AcceptanceCriteria": "Each inventory item has a deterministic initial classification.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Support initial format set",
+      "StoryDescription": "Recognize JPG, JPEG, PNG, and HEIC as photos, and MOV or AAE as non-photo artifacts.",
+      "AcceptanceCriteria": "Initial format support matches the configured extension lists.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Normalize inventory records",
+      "StoryDescription": "Return inventory records with absolute path, normalized extension, size, and initial classification.",
+      "AcceptanceCriteria": "Inventory records expose the normalized metadata needed by downstream modules.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test mixed-folder inventory",
+      "StoryDescription": "Add unit tests covering mixed file types, extension casing, and managed-folder skipping.",
+      "AcceptanceCriteria": "Unit tests cover mixed media, casing behavior, and managed-folder skipping.",
+      "IsDone": true
+    }
+  ]
+}

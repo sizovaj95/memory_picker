@@ -1,0 +1,21 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Best photo scoring rules",
+  "Description": "Draft feature for centralizing the configurable definition of what makes a selected photo best.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define configurable scoring schema",
+      "StoryDescription": "Create a configurable schema for weighting people, scenery, diversity, and other selection factors.",
+      "AcceptanceCriteria": "The project has a single modifiable definition of best-photo scoring.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Map cluster data to scores",
+      "StoryDescription": "Convert cluster and metadata outputs into comparable scores for ranking.",
+      "AcceptanceCriteria": "Accepted photos can receive comparable scores for selection.",
+      "IsDone": false
+    }
+  ]
+}

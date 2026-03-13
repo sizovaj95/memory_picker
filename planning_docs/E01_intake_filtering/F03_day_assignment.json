@@ -1,0 +1,42 @@
+{
+  "FeatureId": "03",
+  "FeatureName": "Day assignment",
+  "Description": "Assign accepted photo candidates to stable dayXX folders using EXIF first and mtime second.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Extract capture date from EXIF",
+      "StoryDescription": "Read standard EXIF timestamp fields from supported images and parse them into datetimes.",
+      "AcceptanceCriteria": "The module returns EXIF capture datetimes when they are present and valid.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Fallback to filesystem time",
+      "StoryDescription": "Use the filesystem modified time when EXIF is missing or unreadable.",
+      "AcceptanceCriteria": "Photo records fall back to mtime when EXIF capture date is unavailable.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Build stable day map",
+      "StoryDescription": "Normalize timestamps to local calendar dates and derive ordered dayXX names from distinct dates.",
+      "AcceptanceCriteria": "Distinct dates map deterministically to day01, day02, and so on.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Produce day assignments",
+      "StoryDescription": "Create day assignments that link a source file to its resolved trip day and timestamp source.",
+      "AcceptanceCriteria": "Day assignments expose source path, dayXX name, day index, and timestamp source.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test EXIF and fallback behavior",
+      "StoryDescription": "Add unit tests covering EXIF preference, mtime fallback, same-day grouping, and stable numbering.",
+      "AcceptanceCriteria": "Unit tests verify EXIF-first behavior, fallback behavior, and stable day numbering.",
+      "IsDone": true
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Metadata extraction and normalized records",
+  "Description": "Draft feature for enriching accepted photos with metadata and normalized records before clustering.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define enriched photo record",
+      "StoryDescription": "Extend the photo record with metadata needed by clustering and ranking.",
+      "AcceptanceCriteria": "A normalized record schema exists for clustering inputs.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Extract clustering metadata",
+      "StoryDescription": "Extract the non-AI metadata fields needed for downstream similarity signals.",
+      "AcceptanceCriteria": "Accepted photos can be enriched with clustering metadata.",
+      "IsDone": false
+    }
+  ]
+}

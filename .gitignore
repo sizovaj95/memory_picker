@@ -1,0 +1,6 @@
+.env
+example_photos
+__pycache__
+.venv
+.pytest_cache
+japan_trip

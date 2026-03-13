@@ -1,0 +1,21 @@
+{
+  "FeatureId": "05",
+  "FeatureName": "To-print materialization",
+  "Description": "Draft feature for populating the final to_print folder once selection is complete.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Create to_print day structure",
+      "StoryDescription": "Create the final to_print/dayXX folder structure for selected photos.",
+      "AcceptanceCriteria": "Selected photos can be materialized into the required to_print folder layout.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Copy or move selected outputs safely",
+      "StoryDescription": "Choose the safe file action strategy for final selected photos and test rerun behavior.",
+      "AcceptanceCriteria": "Final selected photos are materialized safely without damaging source day folders.",
+      "IsDone": false
+    }
+  ]
+}

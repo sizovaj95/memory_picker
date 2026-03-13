@@ -1,0 +1,42 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Project bootstrap",
+  "Description": "Create the minimal uv-managed Python project skeleton, config, and shared logging needed for the local pipeline.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define uv project metadata",
+      "StoryDescription": "Add pyproject metadata, runtime dependencies, and dev dependencies so the project can be run and tested via uv.",
+      "AcceptanceCriteria": "The repository contains uv-compatible project metadata and pytest tooling configuration.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Create package layout",
+      "StoryDescription": "Create the src and tests package layout for the Memory Picker application and its unit tests.",
+      "AcceptanceCriteria": "The repository has a src/memory_picker package and a tests structure ready for unit and integration tests.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Add typed configuration",
+      "StoryDescription": "Define typed settings and constants for supported formats, managed folder names, and quality thresholds.",
+      "AcceptanceCriteria": "The application exposes a typed config surface for root path, extensions, folder names, and quality thresholds.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Add shared logging setup",
+      "StoryDescription": "Create logging configuration that can be reused across all pipeline modules.",
+      "AcceptanceCriteria": "Pipeline modules can use a shared logging setup with configurable log level.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Add bootstrap smoke test",
+      "StoryDescription": "Add a first test proving the package imports and settings load correctly.",
+      "AcceptanceCriteria": "A smoke test covers package import and settings defaults.",
+      "IsDone": true
+    }
+  ]
+}

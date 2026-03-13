@@ -1,0 +1,21 @@
+{
+  "FeatureId": "04",
+  "FeatureName": "Cluster summaries and inspection outputs",
+  "Description": "Draft feature for making clusters inspectable before final selection logic is added.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define cluster summary output",
+      "StoryDescription": "Choose the human-readable summary or manifest format for per-day clusters.",
+      "AcceptanceCriteria": "Cluster results can be inspected outside the code.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Add cluster-level tests",
+      "StoryDescription": "Create tests covering representative grouping scenarios and edge cases.",
+      "AcceptanceCriteria": "Automated tests cover cluster generation and summary outputs.",
+      "IsDone": false
+    }
+  ]
+}

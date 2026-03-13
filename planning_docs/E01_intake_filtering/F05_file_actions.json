@@ -1,0 +1,49 @@
+{
+  "FeatureId": "05",
+  "FeatureName": "File actions",
+  "Description": "Move accepted photos, rejected photos, and non-photo artifacts into the correct managed folders without deleting anything.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Create day folder structure",
+      "StoryDescription": "Create dayXX, rejected, and not_photo folders lazily when they are needed.",
+      "AcceptanceCriteria": "Required managed folders are created automatically during file moves.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Move non-photo artifacts",
+      "StoryDescription": "Move videos, sidecars, and unsupported files into the correct dayXX/not_photo folder.",
+      "AcceptanceCriteria": "Non-photo artifacts are moved into dayXX/not_photo for their assigned day.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Move rejected photos",
+      "StoryDescription": "Move rejected photo candidates into dayXX/rejected for their assigned day.",
+      "AcceptanceCriteria": "Rejected photos are moved into dayXX/rejected without being deleted.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Move accepted photos",
+      "StoryDescription": "Move accepted photos into the root of their assigned dayXX folder.",
+      "AcceptanceCriteria": "Accepted photos are moved into the correct dayXX folder.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Make moves collision-safe",
+      "StoryDescription": "Avoid silent overwrites by generating a deterministic duplicate suffix when destination names collide.",
+      "AcceptanceCriteria": "File moves never overwrite an existing file silently and produce a safe duplicate name when needed.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "06",
+      "StoryName": "Test folder moves",
+      "StoryDescription": "Add unit tests covering folder creation, destination placement, and collision-safe moves.",
+      "AcceptanceCriteria": "Unit tests cover folder creation and collision-safe move behavior.",
+      "IsDone": true
+    }
+  ]
+}

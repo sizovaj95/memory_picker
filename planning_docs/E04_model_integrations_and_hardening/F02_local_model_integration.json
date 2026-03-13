@@ -1,0 +1,21 @@
+{
+  "FeatureId": "02",
+  "FeatureName": "Optional local model integration",
+  "Description": "Draft feature for trying local/open-source vision models on the available GPU.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Evaluate local model candidates",
+      "StoryDescription": "Assess candidate local vision models for embeddings, labeling, or grouping assistance.",
+      "AcceptanceCriteria": "The project has a shortlist of viable local model options and tradeoffs.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Add pluggable local model adapter",
+      "StoryDescription": "Add an adapter boundary so local model support can be enabled without changing pipeline orchestration.",
+      "AcceptanceCriteria": "The codebase can plug in a local model behind a stable interface.",
+      "IsDone": false
+    }
+  ]
+}

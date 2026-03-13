@@ -1,0 +1,21 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Cloud vision provider integration",
+  "Description": "Draft feature for integrating a cloud model that can evaluate photo content and quality.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Choose cloud provider contract",
+      "StoryDescription": "Define the provider abstraction, request schema, and response schema for cloud vision analysis.",
+      "AcceptanceCriteria": "The project has a provider interface that supports a chosen cloud model.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Add mocked provider tests",
+      "StoryDescription": "Test the provider abstraction with mocks so no real AI service is used in automated tests.",
+      "AcceptanceCriteria": "Automated tests cover provider integration without calling real AI services.",
+      "IsDone": false
+    }
+  ]
+}

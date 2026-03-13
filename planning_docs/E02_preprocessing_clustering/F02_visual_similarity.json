@@ -1,0 +1,21 @@
+{
+  "FeatureId": "02",
+  "FeatureName": "Visual similarity signals",
+  "Description": "Draft feature for computing deterministic or model-based similarity inputs per day.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Prototype deterministic similarity signals",
+      "StoryDescription": "Evaluate local signals such as timestamps, color histograms, or simple visual descriptors.",
+      "AcceptanceCriteria": "A local baseline exists for similarity grouping experiments.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Prototype embedding extraction",
+      "StoryDescription": "Evaluate whether a local or cloud-based embedding model should be used for richer grouping.",
+      "AcceptanceCriteria": "The project has a candidate embedding extraction approach for comparison.",
+      "IsDone": false
+    }
+  ]
+}

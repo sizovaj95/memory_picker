@@ -1,0 +1,42 @@
+{
+  "FeatureId": "04",
+  "FeatureName": "Quality assessment",
+  "Description": "Reject low-quality or unreadable photos using deterministic local image checks only.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Validate image readability",
+      "StoryDescription": "Attempt to open candidate photos and reject unreadable or corrupt files safely.",
+      "AcceptanceCriteria": "Unreadable image files are marked as corrupt without crashing the pipeline.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Detect blur locally",
+      "StoryDescription": "Compute a deterministic local blur score from grayscale image content.",
+      "AcceptanceCriteria": "The module computes a blur metric and rejects images below the configured threshold.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Detect dark and overexposed images",
+      "StoryDescription": "Compute brightness and overexposure metrics and reject photos outside acceptable thresholds.",
+      "AcceptanceCriteria": "The module rejects overly dark or severely overexposed images using configured thresholds.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Return explainable assessment results",
+      "StoryDescription": "Return structured quality assessments with metrics and rejection reasons.",
+      "AcceptanceCriteria": "Quality results expose acceptance flag, metrics, rejection reasons, and optional error details.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test quality checks",
+      "StoryDescription": "Add unit tests for sharp, blurry, dark, and corrupt image cases.",
+      "AcceptanceCriteria": "Unit tests cover acceptance and rejection paths for the local quality module.",
+      "IsDone": true
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "FeatureId": "03",
+  "FeatureName": "Cluster generation",
+  "Description": "Draft feature for turning similarity signals into per-day photo clusters.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Choose per-day clustering strategy",
+      "StoryDescription": "Select the algorithm and thresholds used to group similar shots within one day.",
+      "AcceptanceCriteria": "A per-day clustering approach is defined and configurable.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Generate cluster assignments",
+      "StoryDescription": "Assign each accepted photo to a cluster for later ranking and de-duplication.",
+      "AcceptanceCriteria": "Accepted photos receive deterministic cluster assignments.",
+      "IsDone": false
+    }
+  ]
+}

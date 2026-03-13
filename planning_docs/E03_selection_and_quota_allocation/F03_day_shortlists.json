@@ -1,0 +1,21 @@
+{
+  "FeatureId": "03",
+  "FeatureName": "Per-day shortlist generation",
+  "Description": "Draft feature for ranking representatives within each day and producing shortlists.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Rank day candidates",
+      "StoryDescription": "Rank representative photos within each day according to the configured scoring rules.",
+      "AcceptanceCriteria": "Each day can produce an ordered shortlist of candidate photos.",
+      "IsDone": false
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Handle sparse or empty days",
+      "StoryDescription": "Handle days with few or zero acceptable candidates without failing the selection flow.",
+      "AcceptanceCriteria": "The day-level ranking flow supports sparse and empty days safely.",
+      "IsDone": false
+    }
+  ]
+}

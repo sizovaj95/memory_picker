@@ -1,0 +1,42 @@
+{
+  "FeatureId": "06",
+  "FeatureName": "Pipeline entrypoint",
+  "Description": "Provide a single local command that runs the full Epic 1 flow end to end.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Add CLI entrypoint",
+      "StoryDescription": "Add a command-line entrypoint callable with uv run and a selected root folder.",
+      "AcceptanceCriteria": "The project exposes a CLI entrypoint that accepts the trip root path.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Orchestrate Epic 1 pipeline",
+      "StoryDescription": "Connect inventory, day assignment, quality checks, and file actions into one pipeline function.",
+      "AcceptanceCriteria": "A single pipeline function runs the Epic 1 workflow end to end.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Log run summary",
+      "StoryDescription": "Emit structured log messages that summarize how many files were accepted, rejected, or treated as artifacts.",
+      "AcceptanceCriteria": "The pipeline logs a run summary with useful counts for operators.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Render user-facing report",
+      "StoryDescription": "Return and print a concise run summary for local use from VS Code or uv run.",
+      "AcceptanceCriteria": "The entrypoint prints a clear report of the processing result.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test end-to-end behavior",
+      "StoryDescription": "Add an integration-style test covering a full run and a safe rerun on the same folder.",
+      "AcceptanceCriteria": "Automated tests cover a full end-to-end run and rerun behavior.",
+      "IsDone": true
+    }
+  ]
+}
