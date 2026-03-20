@@ -51,6 +51,34 @@ def write_dark_image(path: Path, size: tuple[int, int] = (128, 128)) -> Path:
     return path
 
 
+def write_subject_sharp_image(path: Path, size: tuple[int, int] = (128, 128)) -> Path:
+    """Create an image with a sharp center and intentionally blurred background."""
+
+    base = Image.new("RGB", size, "white")
+    draw = ImageDraw.Draw(base)
+    square_size = 16
+
+    for top in range(0, size[1], square_size):
+        for left in range(0, size[0], square_size):
+            fill = "black" if ((left // square_size) + (top // square_size)) % 2 == 0 else "white"
+            draw.rectangle(
+                [left, top, left + square_size - 1, top + square_size - 1],
+                fill=fill,
+            )
+
+    blurred = base.filter(ImageFilter.GaussianBlur(radius=10.0))
+    subject_box = (
+        size[0] // 4,
+        size[1] // 4,
+        (size[0] * 3) // 4,
+        (size[1] * 3) // 4,
+    )
+    subject_crop = base.crop(subject_box)
+    blurred.paste(subject_crop, subject_box)
+    blurred.save(path)
+    return path
+
+
 def write_text_file(path: Path, contents: str = "placeholder") -> Path:
     """Create a text-based placeholder file."""
 

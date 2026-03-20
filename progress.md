@@ -29,3 +29,6 @@
 2026-03-13 - E01/F06/S03: Added pipeline summary logging with accepted, rejected, and artifact counts.
 2026-03-13 - E01/F06/S04: Added a user-facing run summary report returned by the pipeline and printed by the CLI.
 2026-03-13 - E01/F06/S05: Added an end-to-end test covering a full run and an idempotent rerun on the same folder.
+2026-03-17 - E01/F06/S04: Added a VS Code-oriented debug entrypoint with a hardcoded root path and launch configuration for one-click local debugging.
+2026-03-20 - E01/F04/S02: Replaced the global blur score with a tile-based blur score that emphasizes the sharpest regions of the image.
+2026-03-20 - E01/F04/S05: Added a quality test covering intentional background blur with a sharp subject region.

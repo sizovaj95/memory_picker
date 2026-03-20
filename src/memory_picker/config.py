@@ -38,6 +38,9 @@ class QualityThresholds:
     """Configurable local quality thresholds."""
 
     blur_threshold: float = 30.0
+    blur_tile_rows: int = 6
+    blur_tile_cols: int = 6
+    blur_top_tile_fraction: float = 0.25
     dark_brightness_threshold: float = 40.0
     overexposed_pixel_threshold: float = 250.0
     overexposed_ratio_threshold: float = 0.60
