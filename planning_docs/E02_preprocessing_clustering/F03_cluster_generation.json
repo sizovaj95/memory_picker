@@ -1,21 +1,49 @@
 {
   "FeatureId": "03",
   "FeatureName": "Cluster generation",
-  "Description": "Draft feature for turning similarity signals into per-day photo clusters.",
+  "Description": "Turn deterministic similarity signals and DINOv2 embeddings into two-stage per-day clusters.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Choose per-day clustering strategy",
-      "StoryDescription": "Select the algorithm and thresholds used to group similar shots within one day.",
-      "AcceptanceCriteria": "A per-day clustering approach is defined and configurable.",
-      "IsDone": false
+      "StoryName": "Implement deterministic burst grouping",
+      "StoryDescription": "Group near-duplicate photos into burst groups using configurable time-gap, perceptual-hash, and histogram thresholds.",
+      "AcceptanceCriteria": "The project groups same-scene burst candidates deterministically before semantic clustering.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Generate cluster assignments",
-      "StoryDescription": "Assign each accepted photo to a cluster for later ranking and de-duplication.",
-      "AcceptanceCriteria": "Accepted photos receive deterministic cluster assignments.",
-      "IsDone": false
+      "StoryName": "Generate embeddings for burst representatives",
+      "StoryDescription": "Generate normalized embeddings for accepted photos and use burst representatives as Stage 2 semantic-clustering inputs.",
+      "AcceptanceCriteria": "Burst representatives can be embedded and compared via cosine distance.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Run agglomerative clustering",
+      "StoryDescription": "Cluster burst representatives with deterministic agglomerative clustering using a configurable cosine-distance threshold.",
+      "AcceptanceCriteria": "The project produces deterministic within-day clusters without relying on HDBSCAN.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Propagate cluster membership",
+      "StoryDescription": "Propagate final cluster IDs from burst representatives back to all photos in the original burst groups.",
+      "AcceptanceCriteria": "Every accepted photo in a day receives a final Epic 2 cluster assignment.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Select deterministic cluster medoids",
+      "StoryDescription": "Choose one representative photo per final cluster as the medoid based on embedding distances.",
+      "AcceptanceCriteria": "Each final cluster has a deterministic representative photo for inspection and later ranking.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "06",
+      "StoryName": "Test cluster generation",
+      "StoryDescription": "Add unit tests covering single-photo days, duplicate-heavy groups, mixed-scene days, and medoid selection.",
+      "AcceptanceCriteria": "Automated tests verify burst grouping, semantic clustering, and medoid selection stability.",
+      "IsDone": true
     }
   ]
 }

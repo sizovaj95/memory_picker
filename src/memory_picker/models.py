@@ -7,6 +7,8 @@ from datetime import date, datetime
 from enum import StrEnum
 from pathlib import Path
 
+import numpy as np
+
 
 class MediaClassification(StrEnum):
     """Initial file classification before image inspection."""
@@ -38,6 +40,14 @@ class DestinationCategory(StrEnum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     NOT_PHOTO = "not_photo"
+
+
+class Orientation(StrEnum):
+    """Simple photo orientation classification."""
+
+    LANDSCAPE = "landscape"
+    PORTRAIT = "portrait"
+    SQUARE = "square"
 
 
 @dataclass(frozen=True)
@@ -132,6 +142,10 @@ class RunSummary:
     day_count: int
     moved_files: int
     created_directories: int
+    clustered_days: int = 0
+    burst_group_count: int = 0
+    final_cluster_count: int = 0
+    manifests_written: int = 0
 
     def to_report(self) -> str:
         """Render a concise CLI report."""
@@ -147,5 +161,89 @@ class RunSummary:
             f"  day_count: {self.day_count}",
             f"  moved_files: {self.moved_files}",
             f"  created_directories: {self.created_directories}",
+            f"  clustered_days: {self.clustered_days}",
+            f"  burst_group_count: {self.burst_group_count}",
+            f"  final_cluster_count: {self.final_cluster_count}",
+            f"  manifests_written: {self.manifests_written}",
         ]
         return "\n".join(lines)
+
+
+@dataclass(frozen=True)
+class DeterministicSimilarityFeatures:
+    """Local handcrafted features used before model embeddings."""
+
+    perceptual_hash: int
+    color_histogram: tuple[float, ...]
+
+
+@dataclass(frozen=True)
+class AcceptedPhotoRecord:
+    """Accepted day photo plus preprocessing metadata for clustering."""
+
+    day_name: str
+    source_path: Path
+    relative_path: Path
+    captured_at: datetime
+    captured_on: date
+    width: int
+    height: int
+    orientation: Orientation
+    quality_metrics: QualityMetrics
+    similarity_features: DeterministicSimilarityFeatures
+
+    @property
+    def filename(self) -> str:
+        return self.source_path.name
+
+
+@dataclass(frozen=True)
+class ImageEmbedding:
+    """Embedding vector for a single accepted photo."""
+
+    source_path: Path
+    vector: np.ndarray
+
+
+@dataclass(frozen=True)
+class BurstGroup:
+    """Stage 1 burst / near-duplicate group."""
+
+    burst_group_id: str
+    day_name: str
+    member_paths: tuple[Path, ...]
+    representative_path: Path
+
+
+@dataclass(frozen=True)
+class DayCluster:
+    """Stage 2 final within-day cluster."""
+
+    cluster_id: str
+    day_name: str
+    member_paths: tuple[Path, ...]
+    burst_group_ids: tuple[str, ...]
+    representative_path: Path
+
+
+@dataclass(frozen=True)
+class DayClusterManifest:
+    """Written manifest summary for one day."""
+
+    day_name: str
+    manifest_path: Path
+    accepted_photo_count: int
+    burst_group_count: int
+    cluster_count: int
+    singleton_cluster_count: int
+
+
+@dataclass(frozen=True)
+class ClusteringRunSummary:
+    """Epic 2 clustering summary across all day folders."""
+
+    clustered_days: int = 0
+    accepted_photo_count: int = 0
+    burst_group_count: int = 0
+    cluster_count: int = 0
+    manifests_written: int = 0

@@ -5,7 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
+
+from memory_picker.models import AcceptedPhotoRecord, ImageEmbedding
 
 
 def write_checkerboard_image(
@@ -47,6 +50,18 @@ def write_dark_image(path: Path, size: tuple[int, int] = (128, 128)) -> Path:
     """Create a dark image to trigger exposure rejection."""
 
     image = Image.new("RGB", size, (5, 5, 5))
+    image.save(path)
+    return path
+
+
+def write_color_block_image(
+    path: Path,
+    color: tuple[int, int, int],
+    size: tuple[int, int] = (128, 128),
+) -> Path:
+    """Create a solid-color image for deterministic histogram differences."""
+
+    image = Image.new("RGB", size, color)
     image.save(path)
     return path
 
@@ -95,3 +110,29 @@ def set_mtime(path: Path, when: datetime) -> None:
     path.touch(exist_ok=True)
     path.chmod(0o644)
     os.utime(path, (timestamp, timestamp))
+
+
+def normalize_vector(values: list[float]) -> np.ndarray:
+    """Return a normalized float32 vector."""
+
+    vector = np.asarray(values, dtype=np.float32)
+    norm = np.linalg.norm(vector)
+    if norm == 0:
+        return vector
+    return vector / norm
+
+
+class FilenameMockEmbedder:
+    """Mock embedder that returns vectors by filename."""
+
+    def __init__(self, vectors_by_filename: dict[str, list[float]]) -> None:
+        self.vectors_by_filename = vectors_by_filename
+
+    def embed_images(self, photo_records: list[AcceptedPhotoRecord]) -> list[ImageEmbedding]:
+        return [
+            ImageEmbedding(
+                source_path=record.source_path,
+                vector=normalize_vector(self.vectors_by_filename[record.source_path.name]),
+            )
+            for record in photo_records
+        ]

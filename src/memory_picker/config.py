@@ -47,6 +47,26 @@ class QualityThresholds:
 
 
 @dataclass(frozen=True)
+class EmbeddingSettings:
+    """Config for the local image embedding backend."""
+
+    backend_name: str = "dinov2"
+    model_name: str = "facebook/dinov2-base"
+    device: str = "auto"
+    batch_size: int = 8
+
+
+@dataclass(frozen=True)
+class ClusteringThresholds:
+    """Deterministic and embedding-driven clustering thresholds."""
+
+    burst_time_gap_seconds: int = 120
+    perceptual_hash_hamming_threshold: int = 6
+    histogram_similarity_threshold: float = 0.92
+    semantic_cosine_distance_threshold: float = 0.18
+
+
+@dataclass(frozen=True)
 class AppSettings:
     """Settings used by the local pipeline."""
 
@@ -59,6 +79,8 @@ class AppSettings:
     )
     managed_folders: ManagedFolderNames = field(default_factory=ManagedFolderNames)
     quality_thresholds: QualityThresholds = field(default_factory=QualityThresholds)
+    embedding_settings: EmbeddingSettings = field(default_factory=EmbeddingSettings)
+    clustering_thresholds: ClusteringThresholds = field(default_factory=ClusteringThresholds)
     day_prefix: str = "day"
     collision_suffix_separator: str = "__dup"
     max_photos_per_day: int | None = None
