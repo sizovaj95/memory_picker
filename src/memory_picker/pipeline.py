@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from memory_picker.cluster_pipeline import run_clustering_pipeline
 from memory_picker.config import AppSettings
 from memory_picker.day_assignment import (
     assign_day,
@@ -21,12 +22,13 @@ from memory_picker.models import (
     RunSummary,
     TimestampSource,
 )
+from memory_picker.preprocessing import iter_day_directories
 from memory_picker.quality import assess_photo
 
 LOGGER = logging.getLogger("memory_picker.pipeline")
 
 
-def run_pipeline(settings: AppSettings) -> RunSummary:
+def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
     """Run the deterministic intake and quality-filtering pipeline."""
 
     inventory = scan_trip_root(settings)
@@ -82,6 +84,7 @@ def run_pipeline(settings: AppSettings) -> RunSummary:
         )
 
     file_summary = apply_move_plans(settings, move_plans)
+    clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
 
     summary = RunSummary(
         total_items=len(inventory),
@@ -94,13 +97,17 @@ def run_pipeline(settings: AppSettings) -> RunSummary:
         ),
         accepted_photos=sum(1 for assessment in assessments if assessment.is_accepted),
         rejected_photos=sum(1 for assessment in assessments if not assessment.is_accepted),
-        day_count=len(day_map),
+        day_count=len(iter_day_directories(settings)),
         moved_files=file_summary.total_moved,
         created_directories=file_summary.created_directories,
+        clustered_days=clustering_summary.clustered_days,
+        burst_group_count=clustering_summary.burst_group_count,
+        final_cluster_count=clustering_summary.cluster_count,
+        manifests_written=clustering_summary.manifests_written,
     )
 
     LOGGER.info(
-        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s",
+        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s",
         summary.total_items,
         summary.photo_items,
         summary.accepted_photos,
@@ -109,5 +116,7 @@ def run_pipeline(settings: AppSettings) -> RunSummary:
         summary.unsupported_items,
         summary.day_count,
         summary.moved_files,
+        summary.clustered_days,
+        summary.final_cluster_count,
     )
     return summary

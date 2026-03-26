@@ -1,21 +1,35 @@
 {
   "FeatureId": "04",
   "FeatureName": "Cluster summaries and inspection outputs",
-  "Description": "Draft feature for making clusters inspectable before final selection logic is added.",
+  "Description": "Write per-day cluster manifests so Epic 2 results are inspectable before final album selection exists.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Define cluster summary output",
-      "StoryDescription": "Choose the human-readable summary or manifest format for per-day clusters.",
-      "AcceptanceCriteria": "Cluster results can be inspected outside the code.",
-      "IsDone": false
+      "StoryName": "Define per-day manifest schema",
+      "StoryDescription": "Define a structured JSON manifest schema containing cluster IDs, member filenames, representatives, burst memberships, timestamps, and similarity metrics.",
+      "AcceptanceCriteria": "The project has a stable per-day cluster manifest schema for inspection and downstream use.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Add cluster-level tests",
-      "StoryDescription": "Create tests covering representative grouping scenarios and edge cases.",
-      "AcceptanceCriteria": "Automated tests cover cluster generation and summary outputs.",
-      "IsDone": false
+      "StoryName": "Persist manifests next to day photos",
+      "StoryDescription": "Write one cluster_manifest.json file into each dayXX folder after clustering completes.",
+      "AcceptanceCriteria": "Each clustered day produces a JSON manifest next to its accepted photos.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Add summary block to manifests",
+      "StoryDescription": "Add accepted-photo, burst-group, final-cluster, and singleton counts to the per-day manifest summary.",
+      "AcceptanceCriteria": "Each manifest contains a compact human-readable summary section.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Test manifest outputs and reruns",
+      "StoryDescription": "Add tests covering manifest shape, ordering, representative data, and rerun stability.",
+      "AcceptanceCriteria": "Automated tests verify manifest shape, deterministic ordering, and safe rerun behavior.",
+      "IsDone": true
     }
   ]
 }

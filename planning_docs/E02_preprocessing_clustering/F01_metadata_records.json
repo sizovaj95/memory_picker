@@ -1,21 +1,35 @@
 {
   "FeatureId": "01",
   "FeatureName": "Metadata extraction and normalized records",
-  "Description": "Draft feature for enriching accepted photos with metadata and normalized records before clustering.",
+  "Description": "Enrich accepted day photos with normalized records and deterministic similarity helpers before clustering.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Define enriched photo record",
-      "StoryDescription": "Extend the photo record with metadata needed by clustering and ranking.",
-      "AcceptanceCriteria": "A normalized record schema exists for clustering inputs.",
-      "IsDone": false
+      "StoryName": "Define accepted-photo schema",
+      "StoryDescription": "Define the accepted-photo clustering record with day name, relative path, capture metadata, dimensions, orientation, quality metrics, and deterministic similarity helpers.",
+      "AcceptanceCriteria": "The codebase exposes a stable accepted-photo schema for Epic 2 preprocessing and clustering.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Extract clustering metadata",
-      "StoryDescription": "Extract the non-AI metadata fields needed for downstream similarity signals.",
-      "AcceptanceCriteria": "Accepted photos can be enriched with clustering metadata.",
-      "IsDone": false
+      "StoryName": "Load accepted photos from day roots",
+      "StoryDescription": "Read accepted photos from the root of each dayXX directory while excluding rejected, not_photo, and manifest files.",
+      "AcceptanceCriteria": "Epic 2 preprocessing reads only accepted day-root photos from existing day folders.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Compute deterministic descriptors",
+      "StoryDescription": "Compute local preprocessing descriptors including perceptual hash, normalized color histogram, and capture-time metadata.",
+      "AcceptanceCriteria": "Each accepted-photo record includes deterministic similarity descriptors for burst grouping.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Test metadata extraction",
+      "StoryDescription": "Add unit tests covering accepted-photo discovery, day-folder filtering, and deterministic descriptor extraction.",
+      "AcceptanceCriteria": "Automated tests verify accepted-photo discovery and descriptor stability.",
+      "IsDone": true
     }
   ]
 }

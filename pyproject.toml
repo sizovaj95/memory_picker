@@ -12,6 +12,8 @@ dependencies = [
     "numpy>=2.2.0",
     "pillow>=11.1.0",
     "pillow-heif>=0.21.0",
+    "torch>=2.6.0",
+    "transformers>=4.52.0",
 ]
 
 [project.scripts]

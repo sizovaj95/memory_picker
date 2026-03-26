@@ -32,3 +32,22 @@
 2026-03-17 - E01/F06/S04: Added a VS Code-oriented debug entrypoint with a hardcoded root path and launch configuration for one-click local debugging.
 2026-03-20 - E01/F04/S02: Replaced the global blur score with a tile-based blur score that emphasizes the sharpest regions of the image.
 2026-03-20 - E01/F04/S05: Added a quality test covering intentional background blur with a sharp subject region.
+2026-03-23 - E02/F01/S01: Added accepted-photo clustering records with day metadata, dimensions, orientation, quality metrics, and deterministic similarity descriptors.
+2026-03-23 - E02/F01/S02: Implemented accepted-photo discovery from day roots while excluding rejected, not_photo, and manifest files.
+2026-03-23 - E02/F01/S03: Added perceptual-hash and normalized RGB histogram extraction for burst-group preprocessing.
+2026-03-23 - E02/F01/S04: Added preprocessing tests for accepted-photo discovery, descriptor extraction, and day-folder filtering.
+2026-03-23 - E02/F02/S01: Introduced an image-embedder abstraction for Epic 2 clustering.
+2026-03-23 - E02/F02/S02: Implemented a default DINOv2 ViT-B/14 embedder with configurable model, device, and batch size settings.
+2026-03-23 - E02/F02/S03: Normalized embedding vectors for cosine-distance comparisons in Stage 2 clustering.
+2026-03-23 - E02/F02/S04: Added filename-based mock embeddings so automated tests do not invoke a real model.
+2026-03-23 - E02/F02/S05: Added an opt-in manual DINOv2 benchmark test path guarded by an environment variable.
+2026-03-23 - E02/F03/S01: Implemented deterministic burst grouping using time gap, perceptual hash, and histogram similarity thresholds.
+2026-03-23 - E02/F03/S02: Embedded accepted photos and used burst representatives as semantic-clustering seeds.
+2026-03-23 - E02/F03/S03: Added deterministic agglomerative clustering with cosine-distance thresholding for per-day semantic groups.
+2026-03-23 - E02/F03/S04: Propagated final cluster IDs from burst representatives back to all accepted photos in the day.
+2026-03-23 - E02/F03/S05: Added deterministic medoid selection for final cluster representatives.
+2026-03-23 - E02/F03/S06: Added unit tests covering duplicate-heavy bursts, mixed-scene clustering, and representative stability.
+2026-03-23 - E02/F04/S01: Defined a per-day cluster manifest schema containing summaries, burst groups, clusters, members, and similarity metrics.
+2026-03-23 - E02/F04/S02: Persisted cluster manifests as `cluster_manifest.json` files inside each clustered day folder.
+2026-03-23 - E02/F04/S03: Added per-day summary blocks with accepted-photo, burst-group, final-cluster, and singleton counts.
+2026-03-23 - E02/F04/S04: Added manifest and pipeline rerun tests and verified Epic 2 with `15 passed, 1 skipped`.

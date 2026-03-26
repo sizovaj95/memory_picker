@@ -1,21 +1,42 @@
 {
   "FeatureId": "02",
   "FeatureName": "Visual similarity signals",
-  "Description": "Draft feature for computing deterministic or model-based similarity inputs per day.",
+  "Description": "Add a local image-embedding abstraction with DINOv2 as the default Epic 2 backend.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Prototype deterministic similarity signals",
-      "StoryDescription": "Evaluate local signals such as timestamps, color histograms, or simple visual descriptors.",
-      "AcceptanceCriteria": "A local baseline exists for similarity grouping experiments.",
-      "IsDone": false
+      "StoryName": "Define image embedder interface",
+      "StoryDescription": "Introduce an image-embedding abstraction that can support DINOv2 now and future SigLIP2 or OpenCLIP backends later.",
+      "AcceptanceCriteria": "The codebase exposes a stable image embedder interface and config surface for Epic 2.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Prototype embedding extraction",
-      "StoryDescription": "Evaluate whether a local or cloud-based embedding model should be used for richer grouping.",
-      "AcceptanceCriteria": "The project has a candidate embedding extraction approach for comparison.",
-      "IsDone": false
+      "StoryName": "Implement DINOv2 backend",
+      "StoryDescription": "Implement a local DINOv2 ViT-B/14 embedder with configurable model identifier, device selection, and batch size.",
+      "AcceptanceCriteria": "The project has a working default DINOv2 image-embedding backend for Epic 2.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Normalize embeddings for cosine distance",
+      "StoryDescription": "Normalize all generated embedding vectors so cosine-distance comparisons are stable and consistent.",
+      "AcceptanceCriteria": "Embedding vectors are normalized before they are used by clustering logic.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Mock embedder in tests",
+      "StoryDescription": "Use a mock image embedder in automated tests so no real model runs are required for unit or integration coverage.",
+      "AcceptanceCriteria": "Automated tests cover embedding-driven clustering without invoking a real model.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Add optional manual benchmark path",
+      "StoryDescription": "Add a skipped manual benchmark-style test path for trying the real DINOv2 embedder on a real day folder when requested.",
+      "AcceptanceCriteria": "The repo contains an opt-in manual benchmark path for real-model embedding evaluation.",
+      "IsDone": true
     }
   ]
 }
