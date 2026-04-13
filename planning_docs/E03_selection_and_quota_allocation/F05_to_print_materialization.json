@@ -1,21 +1,35 @@
 {
   "FeatureId": "05",
-  "FeatureName": "To-print materialization",
-  "Description": "Draft feature for populating the final to_print folder once selection is complete.",
+  "FeatureName": "To-print materialization and final manifests",
+  "Description": "Copy the final selected photos into to_print and write a trip-level manifest describing the final album selection decisions.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Create to_print day structure",
-      "StoryDescription": "Create the final to_print/dayXX folder structure for selected photos.",
-      "AcceptanceCriteria": "Selected photos can be materialized into the required to_print folder layout.",
-      "IsDone": false
+      "StoryName": "Create to_print output structure",
+      "StoryDescription": "Create or refresh the to_print/dayXX folder structure for the final selected photos while leaving originals untouched in day folders.",
+      "AcceptanceCriteria": "The project can create a complete to_print output structure for the final selection without mutating originals.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Copy or move selected outputs safely",
-      "StoryDescription": "Choose the safe file action strategy for final selected photos and test rerun behavior.",
-      "AcceptanceCriteria": "Final selected photos are materialized safely without damaging source day folders.",
-      "IsDone": false
+      "StoryName": "Copy selected photos safely",
+      "StoryDescription": "Copy selected photos into to_print/dayXX instead of moving them from their original day folders.",
+      "AcceptanceCriteria": "Final selected photos are copied safely into to_print without damaging source folders.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Write final trip selection manifest",
+      "StoryDescription": "Write to_print/selection_manifest.json containing selected photos, source day, source cluster, saved GPT outputs, prompt configuration, and reasons for any unfilled capacity.",
+      "AcceptanceCriteria": "The final album output includes a trip-level manifest describing how and why each photo was selected.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Test to_print output flow",
+      "StoryDescription": "Add tests for output structure, rerun safety, and preservation of original day photos.",
+      "AcceptanceCriteria": "Automated tests verify to_print creation, manifest writing, rerun safety, and no mutation of originals.",
+      "IsDone": true
     }
   ]
 }

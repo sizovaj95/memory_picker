@@ -1,21 +1,42 @@
 {
   "FeatureId": "01",
-  "FeatureName": "Best photo scoring rules",
-  "Description": "Draft feature for centralizing the configurable definition of what makes a selected photo best.",
+  "FeatureName": "Selection policy and configurable GPT prompt",
+  "Description": "Define the configurable selection policy, optional user preference prompt, and structured GPT response schema used to rank photos for final album selection.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Define configurable scoring schema",
-      "StoryDescription": "Create a configurable schema for weighting people, scenery, diversity, and other selection factors.",
-      "AcceptanceCriteria": "The project has a single modifiable definition of best-photo scoring.",
-      "IsDone": false
+      "StoryName": "Define selection settings",
+      "StoryDescription": "Create selection settings for max photos per day, max photos total, OpenAI model settings, deterministic tie-breaks, and large-cluster dedup rules.",
+      "AcceptanceCriteria": "The project has a typed selection settings surface for Epic 3 behavior and limits.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Map cluster data to scores",
-      "StoryDescription": "Convert cluster and metadata outputs into comparable scores for ranking.",
-      "AcceptanceCriteria": "Accepted photos can receive comparable scores for selection.",
-      "IsDone": false
+      "StoryName": "Add optional preference prompt",
+      "StoryDescription": "Make the GPT ranking prompt configurable so the user can optionally specify priorities such as ignoring food, preferring group photos, or supplying a custom topic order.",
+      "AcceptanceCriteria": "The ranking flow supports an optional user-configurable preference prompt and a sensible default prompt when no preferences are supplied.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Define structured GPT output schema",
+      "StoryDescription": "Define the structured per-photo response schema containing stable photo ID, rank, scores, theme tags, rationale, and an explicit good-enough selection signal.",
+      "AcceptanceCriteria": "The project has a stable structured response contract for GPT day ranking outputs.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Normalize day scores locally",
+      "StoryDescription": "Define local normalization rules so saved GPT scores from different days can be compared later without resending images.",
+      "AcceptanceCriteria": "Saved day-level GPT outputs can be reused for trip-wide selection and quota decisions.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test prompt and schema behavior",
+      "StoryDescription": "Add mocked tests for settings loading, optional prompt overrides, structured response parsing, and score normalization.",
+      "AcceptanceCriteria": "Automated tests verify prompt configuration, response parsing, and local score normalization.",
+      "IsDone": true
     }
   ]
 }

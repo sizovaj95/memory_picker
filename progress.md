@@ -51,3 +51,28 @@
 2026-03-23 - E02/F04/S02: Persisted cluster manifests as `cluster_manifest.json` files inside each clustered day folder.
 2026-03-23 - E02/F04/S03: Added per-day summary blocks with accepted-photo, burst-group, final-cluster, and singleton counts.
 2026-03-23 - E02/F04/S04: Added manifest and pipeline rerun tests and verified Epic 2 with `15 passed, 1 skipped`.
+2026-03-30 - E03/F01/S01: Added typed Epic 3 selection settings for OpenAI model choice, prompt preferences, caps, and large-cluster dedup behavior.
+2026-03-30 - E03/F01/S02: Added an optional configurable GPT preference prompt while preserving a default diversity-first ranking prompt.
+2026-03-30 - E03/F01/S03: Added a strict structured day-ranking schema with stable photo IDs, scores, tags, rationales, and good-enough signals.
+2026-03-30 - E03/F01/S04: Added deterministic local score normalization so saved day rankings can be reused for trip-wide selection without resending images.
+2026-03-30 - E03/F01/S05: Added mocked tests covering prompt construction, schema-driven ranking flow, and score reuse.
+2026-03-30 - E03/F02/S01: Added Epic 3 candidate preparation that reads Epic 2 cluster manifests and identifies large clusters for deduplication.
+2026-03-30 - E03/F02/S02: Collapsed burst groups to one survivor each only for clusters larger than five photos before GPT ranking.
+2026-03-30 - E03/F02/S03: Left singleton and small clusters unchanged so GPT still sees all non-duplicate candidates.
+2026-03-30 - E03/F02/S04: Built complete per-day GPT candidate sets from untouched photos plus large-cluster burst survivors.
+2026-03-30 - E03/F02/S05: Added unit coverage proving only large clusters are reduced before ranking.
+2026-03-30 - E03/F03/S01: Added per-day multimodal GPT request construction with stable photo IDs and no cluster or representative metadata.
+2026-03-30 - E03/F03/S02: Threaded optional prompt preferences into day-ranking requests without making them mandatory.
+2026-03-30 - E03/F03/S03: Parsed full day rankings into stable records with scores, tags, rationales, and explicit good-enough flags.
+2026-03-30 - E03/F03/S04: Persisted `day_selection_manifest.json` files for each ranked day with prompt and response metadata.
+2026-03-30 - E03/F03/S05: Added deterministic validation for malformed GPT outputs including missing IDs, duplicates, and non-contiguous ranks.
+2026-03-30 - E03/F03/S06: Added mocked tests for day-ranking request construction and manifest-compatible ranking results.
+2026-03-30 - E03/F04/S01: Added local trip-wide selection that merges saved day results without resending photos.
+2026-03-30 - E03/F04/S02: Applied per-day and trip-wide photo limits as ceilings rather than fill targets.
+2026-03-30 - E03/F04/S03: Stopped final selection early when no additional photos remained good enough.
+2026-03-30 - E03/F04/S04: Allowed optional spillover reuse of spare capacity only when stronger saved candidates remained.
+2026-03-30 - E03/F04/S05: Added tests covering early stop behavior and non-forced quota filling.
+2026-03-30 - E03/F05/S01: Added deterministic `to_print/dayXX` materialization for final album outputs.
+2026-03-30 - E03/F05/S02: Copied selected photos into `to_print` without mutating original day folders.
+2026-03-30 - E03/F05/S03: Added a trip-level `to_print/selection_manifest.json` capturing final picks, source cluster data, and prompt metadata.
+2026-03-30 - E03/F05/S04: Extended the end-to-end pipeline test to cover Epic 3 manifests, `to_print` outputs, and rerun safety.

@@ -1,4 +1,4 @@
-"""End-to-end Epic 1 pipeline orchestration."""
+"""End-to-end pipeline orchestration for Epics 1 through 3."""
 
 from __future__ import annotations
 
@@ -24,12 +24,13 @@ from memory_picker.models import (
 )
 from memory_picker.preprocessing import iter_day_directories
 from memory_picker.quality import assess_photo
+from memory_picker.selection_pipeline import run_selection_pipeline
 
 LOGGER = logging.getLogger("memory_picker.pipeline")
 
 
-def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
-    """Run the deterministic intake and quality-filtering pipeline."""
+def run_pipeline(settings: AppSettings, embedder=None, ranker=None) -> RunSummary:
+    """Run intake, clustering, and final album selection."""
 
     inventory = scan_trip_root(settings)
     photo_items = [item for item in inventory if item.classification == MediaClassification.PHOTO]
@@ -85,6 +86,7 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
 
     file_summary = apply_move_plans(settings, move_plans)
     clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
+    selection_summary = run_selection_pipeline(settings, ranker=ranker)
 
     summary = RunSummary(
         total_items=len(inventory),
@@ -104,10 +106,15 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
         burst_group_count=clustering_summary.burst_group_count,
         final_cluster_count=clustering_summary.cluster_count,
         manifests_written=clustering_summary.manifests_written,
+        ranked_days=selection_summary.ranked_days,
+        ranked_candidates=selection_summary.ranked_candidates,
+        selected_photos=selection_summary.selected_photos,
+        day_selection_manifests_written=selection_summary.day_manifests_written,
+        trip_selection_manifest_written=selection_summary.trip_manifest_written,
     )
 
     LOGGER.info(
-        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s",
+        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s ranked_days=%s selected=%s",
         summary.total_items,
         summary.photo_items,
         summary.accepted_photos,
@@ -118,5 +125,7 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
         summary.moved_files,
         summary.clustered_days,
         summary.final_cluster_count,
+        summary.ranked_days,
+        summary.selected_photos,
     )
     return summary

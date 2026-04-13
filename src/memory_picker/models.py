@@ -146,6 +146,11 @@ class RunSummary:
     burst_group_count: int = 0
     final_cluster_count: int = 0
     manifests_written: int = 0
+    ranked_days: int = 0
+    ranked_candidates: int = 0
+    selected_photos: int = 0
+    day_selection_manifests_written: int = 0
+    trip_selection_manifest_written: bool = False
 
     def to_report(self) -> str:
         """Render a concise CLI report."""
@@ -165,6 +170,11 @@ class RunSummary:
             f"  burst_group_count: {self.burst_group_count}",
             f"  final_cluster_count: {self.final_cluster_count}",
             f"  manifests_written: {self.manifests_written}",
+            f"  ranked_days: {self.ranked_days}",
+            f"  ranked_candidates: {self.ranked_candidates}",
+            f"  selected_photos: {self.selected_photos}",
+            f"  day_selection_manifests_written: {self.day_selection_manifests_written}",
+            f"  trip_selection_manifest_written: {self.trip_selection_manifest_written}",
         ]
         return "\n".join(lines)
 
@@ -247,3 +257,176 @@ class ClusteringRunSummary:
     burst_group_count: int = 0
     cluster_count: int = 0
     manifests_written: int = 0
+
+
+@dataclass(frozen=True)
+class DayCandidatePhoto:
+    """A post-dedup day candidate that may be sent to GPT ranking."""
+
+    photo_id: str
+    day_name: str
+    source_path: Path
+    relative_path: Path
+    cluster_id: str
+    burst_group_id: str
+    captured_at: datetime
+    blur_score: float | None = None
+    brightness_mean: float | None = None
+    overexposed_ratio: float | None = None
+
+
+@dataclass(frozen=True)
+class DayRankingRecord:
+    """Structured GPT ranking output for a single candidate photo."""
+
+    photo_id: str
+    rank: int
+    overall_score: float
+    technical_quality_score: float
+    storytelling_score: float
+    distinctiveness_score: float
+    theme_tags: tuple[str, ...]
+    rationale: str
+    is_good_enough: bool
+    normalized_score: float
+
+
+@dataclass(frozen=True)
+class DaySelectionManifest:
+    """Persisted day ranking results for local reuse."""
+
+    day_name: str
+    manifest_path: Path
+    candidate_count: int
+    ranked_count: int
+    good_enough_count: int
+    provisional_selected_count: int = 0
+    finalist_shortlist_count: int = 0
+    final_selected_count: int = 0
+
+
+@dataclass(frozen=True)
+class DaySelectionResult:
+    """In-memory representation of one day's Epic 3 ranking output."""
+
+    day_name: str
+    candidates: tuple[DayCandidatePhoto, ...]
+    rankings: tuple[DayRankingRecord, ...]
+    manifest_path: Path
+    prompt_name: str
+    model_name: str
+    response_id: str | None = None
+    provisional_photo_ids: tuple[str, ...] = ()
+    finalist_photo_ids: tuple[str, ...] = ()
+    selection_decisions: tuple["PhotoSelectionDecision", ...] = ()
+
+
+@dataclass(frozen=True)
+class DayRankingBatch:
+    """Ranker output before the manifest is written."""
+
+    day_name: str
+    rankings: tuple[DayRankingRecord, ...]
+    prompt_name: str
+    model_name: str
+    response_id: str | None = None
+
+
+@dataclass(frozen=True)
+class FinalistCandidate:
+    """A second-pass finalist considered against other shortlisted photos."""
+
+    day_name: str
+    photo_id: str
+    source_path: Path
+    relative_path: Path
+    cluster_id: str
+    burst_group_id: str
+    first_pass_rank: int
+    normalized_score: float
+    overall_score: float
+    theme_tags: tuple[str, ...]
+    rationale: str
+    shortlist_origin: str
+    provisional_selected: bool
+
+
+@dataclass(frozen=True)
+class FinalCurationRecord:
+    """Structured second-pass curation output for one shortlisted finalist."""
+
+    photo_id: str
+    rank: int
+    keep_for_album: bool
+    duplicate_of_photo_id: str | None
+    materially_distinct_exception: bool
+    rationale: str
+
+
+@dataclass(frozen=True)
+class FinalCurationBatch:
+    """Shortlist curation output before local cluster/day/trip rules are applied."""
+
+    rankings: tuple[FinalCurationRecord, ...]
+    prompt_name: str
+    model_name: str
+    response_id: str | None = None
+
+
+@dataclass(frozen=True)
+class PhotoSelectionDecision:
+    """Local final-selection bookkeeping for one ranked photo."""
+
+    day_name: str
+    photo_id: str
+    provisional_selected: bool = False
+    finalist_shortlisted: bool = False
+    shortlist_origin: str | None = None
+    final_curation_status: str = "not_shortlisted"
+    duplicate_of_photo_id: str | None = None
+    used_cluster_exception: bool = False
+    final_curation_rank: int | None = None
+
+
+@dataclass(frozen=True)
+class TripSelectedPhoto:
+    """A final selected photo after trip-wide caps and spillover logic."""
+
+    day_name: str
+    photo_id: str
+    source_path: Path
+    relative_path: Path
+    cluster_id: str
+    burst_group_id: str
+    rank: int
+    normalized_score: float
+    overall_score: float
+    theme_tags: tuple[str, ...]
+    rationale: str
+    shortlist_origin: str
+    provisional_selected: bool
+    used_cluster_exception: bool = False
+    final_curation_rank: int | None = None
+
+
+@dataclass(frozen=True)
+class TripSelectionManifest:
+    """Persisted trip-wide selection result."""
+
+    manifest_path: Path
+    selected_count: int
+    clusters_represented: int = 0
+    duplicate_rejections: int = 0
+    cluster_exceptions_used: int = 0
+    unfilled_capacity_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class SelectionRunSummary:
+    """Epic 3 summary across all processed days."""
+
+    ranked_days: int = 0
+    ranked_candidates: int = 0
+    selected_photos: int = 0
+    day_manifests_written: int = 0
+    trip_manifest_written: bool = False

@@ -1,21 +1,42 @@
 {
   "FeatureId": "02",
-  "FeatureName": "Per-cluster representative selection",
-  "Description": "Draft feature for reducing near-duplicate shots inside each cluster.",
+  "FeatureName": "Large-cluster dedup before GPT",
+  "Description": "Use Epic 2 cluster outputs only to deduplicate obvious duplicates in large clusters before GPT ranking, without otherwise preselecting photos.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Select cluster representatives",
-      "StoryDescription": "Choose the strongest representative photo from each cluster before day-level ranking.",
-      "AcceptanceCriteria": "Each cluster can produce one or more ranked representative candidates.",
-      "IsDone": false
+      "StoryName": "Identify large clusters",
+      "StoryDescription": "Read cluster_manifest files and identify clusters containing more than 5 photos.",
+      "AcceptanceCriteria": "The selection pipeline can identify which Epic 2 clusters are considered large for deduplication purposes.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Test duplicate-heavy scenarios",
-      "StoryDescription": "Cover cases where one scene has many near-duplicate shots.",
-      "AcceptanceCriteria": "Automated tests cover representative selection for duplicate-heavy clusters.",
-      "IsDone": false
+      "StoryName": "Collapse burst groups in large clusters",
+      "StoryDescription": "For clusters larger than 5 photos, collapse each burst group to one surviving photo using existing duplicate structure from Epic 2.",
+      "AcceptanceCriteria": "Large clusters are reduced by burst-group collapse before GPT ranking.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Leave small and singleton clusters unchanged",
+      "StoryDescription": "Pass through clusters with 5 or fewer photos unchanged, including one-member clusters.",
+      "AcceptanceCriteria": "Small clusters and single-member clusters are not deduplicated away before GPT ranking.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Build GPT candidate sets",
+      "StoryDescription": "Build the final per-day GPT candidate list from all untouched photos plus the survivors from deduplicated large clusters.",
+      "AcceptanceCriteria": "Every day can produce a complete post-dedup candidate list for GPT ranking.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test large-cluster dedup behavior",
+      "StoryDescription": "Add tests proving only large clusters are reduced and that no other photos are filtered at this stage.",
+      "AcceptanceCriteria": "Automated tests cover large-cluster dedup, small-cluster pass-through, and singleton behavior.",
+      "IsDone": true
     }
   ]
 }

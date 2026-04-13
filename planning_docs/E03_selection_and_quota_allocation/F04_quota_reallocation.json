@@ -1,21 +1,42 @@
 {
   "FeatureId": "04",
-  "FeatureName": "Cross-day quota reallocation",
-  "Description": "Draft feature for honoring N-per-day and M-total limits while reusing unused capacity from quieter days.",
+  "FeatureName": "Trip-wide selection and optional quota reuse",
+  "Description": "Build the final trip-wide selection locally from saved day manifests, treating daily and total photo limits as ceilings rather than fill targets.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Define quota allocation algorithm",
-      "StoryDescription": "Choose the deterministic strategy for reallocating unused day quota to stronger days.",
-      "AcceptanceCriteria": "A documented algorithm exists for reallocating per-day quota under a total cap.",
-      "IsDone": false
+      "StoryName": "Merge saved day rankings locally",
+      "StoryDescription": "Build a trip-level merge step that consumes saved day_selection_manifest files and compares photos using saved ranks, scores, tags, and good-enough signals only.",
+      "AcceptanceCriteria": "Trip-wide selection can be computed locally from saved per-day manifests without resending images.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Implement trip-wide selection pass",
-      "StoryDescription": "Apply the quota algorithm to produce the final album selection across all days.",
-      "AcceptanceCriteria": "The selection pass respects per-day and trip-wide limits while reallocating unused capacity.",
-      "IsDone": false
+      "StoryName": "Apply day and trip caps as ceilings",
+      "StoryDescription": "Apply max photos per day and max photos total as upper bounds only, never as quotas that must be filled.",
+      "AcceptanceCriteria": "The trip-wide selection logic respects configured caps without forcing the album to fill all available slots.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Stop below good-enough threshold",
+      "StoryDescription": "Stop selecting additional photos when remaining candidates are no longer marked good enough, even if day or trip caps are not reached.",
+      "AcceptanceCriteria": "The final selection can end early when no sufficiently good photos remain.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Allow optional reuse of spare capacity",
+      "StoryDescription": "Allow unused day capacity to be reused only when other days still have strong remaining candidates, without forcing such reuse.",
+      "AcceptanceCriteria": "Unused quota may remain unused, but strong spillover photos can still be selected when appropriate.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Test trip-wide selection logic",
+      "StoryDescription": "Add tests for quiet days, empty days, partial albums, optional spillover, and deterministic tie-break behavior.",
+      "AcceptanceCriteria": "Automated tests cover trip-wide merge, early stop behavior, and optional quota reuse.",
+      "IsDone": true
     }
   ]
 }

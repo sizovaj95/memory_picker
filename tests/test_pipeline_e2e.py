@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 
@@ -43,7 +44,6 @@ def test_run_pipeline_moves_files_and_is_safe_on_rerun(tmp_path, caplog):
             "accepted_day_two.png": [0.0, 1.0, 0.0],
         }
     )
-
     with caplog.at_level(logging.INFO, logger="memory_picker.pipeline"):
         summary = run_pipeline(settings, embedder=embedder)
 
@@ -60,11 +60,41 @@ def test_run_pipeline_moves_files_and_is_safe_on_rerun(tmp_path, caplog):
     assert (root / "day02" / "accepted_day_two.png").exists()
     assert (root / "day01" / "cluster_manifest.json").exists()
     assert (root / "day02" / "cluster_manifest.json").exists()
+    assert not (root / "day01" / "day_selection_manifest.json").exists()
+    assert not (root / "day02" / "day_selection_manifest.json").exists()
+    assert (root / "intermediate_clusters" / "day01" / "cluster001" / "accepted_day_one.jpg").exists()
+    assert (
+        root / "intermediate_clusters" / "day01" / "cluster001" / "accepted_day_one_variant.jpg"
+    ).exists()
+    assert not (root / "intermediate_clusters" / "day02" / "cluster001").exists()
+    assert (root / "intermediate_clusters" / "day02" / "cluster_other" / "accepted_day_two.png").exists()
+    cluster_manifest = json.loads(
+        (
+            root / "intermediate_clusters" / "day01" / "cluster001" / "selection_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert cluster_manifest["cluster_id"] == "cluster001"
+    assert cluster_manifest["summary"]["member_count"] == 2
+    singleton_manifest = json.loads(
+        (
+            root / "intermediate_clusters" / "day02" / "cluster_other" / "selection_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert singleton_manifest["cluster_id"] == "cluster_other"
+    assert singleton_manifest["original_cluster_ids"] == ["cluster001"]
+    assert (root / "intermediate_result" / "day01" / "accepted_day_one.jpg").exists()
+    assert not (root / "intermediate_result" / "day01" / "accepted_day_one_variant.jpg").exists()
+    assert (root / "intermediate_result" / "day02" / "accepted_day_two.png").exists()
+    assert (root / "intermediate_result" / "selection_manifest.json").exists()
+    assert not (root / "to_print").exists()
     assert summary.clustered_days == 2
     assert summary.final_cluster_count == 2
+    assert summary.ranked_days == 2
+    assert summary.selected_photos == 2
     assert "Run summary" in caplog.text
 
     rerun_summary = run_pipeline(settings, embedder=embedder)
     assert rerun_summary.total_items == 0
     assert rerun_summary.moved_files == 0
     assert rerun_summary.clustered_days == 2
+    assert rerun_summary.selected_photos == 2

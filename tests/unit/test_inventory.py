@@ -18,6 +18,8 @@ def test_scan_trip_root_classifies_files_and_skips_managed_directories(tmp_path)
     (root / "day01").mkdir()
     (root / "day01" / "nested.JPG").write_bytes(b"nested")
     (root / "to_print").mkdir()
+    (root / "intermediate_clusters").mkdir()
+    (root / "intermediate_result").mkdir()
 
     inventory = scan_trip_root(build_settings(root))
     classifications = {item.source_path.name: item.classification for item in inventory}

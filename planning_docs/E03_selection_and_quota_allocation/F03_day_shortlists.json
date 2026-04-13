@@ -1,21 +1,49 @@
 {
   "FeatureId": "03",
-  "FeatureName": "Per-day shortlist generation",
-  "Description": "Draft feature for ranking representatives within each day and producing shortlists.",
+  "FeatureName": "Per-day GPT ranking and selection manifests",
+  "Description": "Send all remaining day photos to GPT once, rank them with structured outputs, and persist per-day selection manifests for later trip-wide decisions.",
   "Stories": [
     {
       "StoryId": "01",
-      "StoryName": "Rank day candidates",
-      "StoryDescription": "Rank representative photos within each day according to the configured scoring rules.",
-      "AcceptanceCriteria": "Each day can produce an ordered shortlist of candidate photos.",
-      "IsDone": false
+      "StoryName": "Build per-day GPT requests",
+      "StoryDescription": "Construct one GPT request per day containing every post-dedup candidate photo for that day, with stable photo IDs and no cluster or representative metadata.",
+      "AcceptanceCriteria": "Each day can produce a complete GPT request containing all remaining day photos exactly once for that run.",
+      "IsDone": true
     },
     {
       "StoryId": "02",
-      "StoryName": "Handle sparse or empty days",
-      "StoryDescription": "Handle days with few or zero acceptable candidates without failing the selection flow.",
-      "AcceptanceCriteria": "The day-level ranking flow supports sparse and empty days safely.",
-      "IsDone": false
+      "StoryName": "Inject optional prompt preferences",
+      "StoryDescription": "Include the optional user preference prompt in the GPT request when configured, otherwise use the default diversity-first prompt.",
+      "AcceptanceCriteria": "The day-ranking request supports optional prompt preferences without requiring them.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Parse full day rankings",
+      "StoryDescription": "Parse GPT responses into a full ordered ranking of all day candidates plus per-photo scores, tags, rationale, and good-enough signals.",
+      "AcceptanceCriteria": "The project can convert GPT responses into stable per-day ranking records for every day candidate.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "04",
+      "StoryName": "Persist day selection manifests",
+      "StoryDescription": "Write day_selection_manifest.json files containing ranked results, prompt metadata, and response metadata for each day.",
+      "AcceptanceCriteria": "Each day produces a persisted selection manifest that can be reused later without resending images.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "05",
+      "StoryName": "Handle malformed GPT results",
+      "StoryDescription": "Define failure handling for malformed responses, missing candidates, duplicate IDs, and partial rankings.",
+      "AcceptanceCriteria": "The day-ranking flow handles malformed GPT responses safely and deterministically.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "06",
+      "StoryName": "Test per-day ranking flow",
+      "StoryDescription": "Add mocked tests for request construction, prompt behavior, response parsing, manifest writing, and rerun-stable ordering.",
+      "AcceptanceCriteria": "Automated tests verify the full per-day GPT ranking and manifest flow.",
+      "IsDone": true
     }
   ]
 }

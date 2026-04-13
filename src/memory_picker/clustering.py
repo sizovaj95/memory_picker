@@ -245,5 +245,3 @@ def build_day_clusters(
         )
 
     return day_clusters
-
-#TODO make work with gpu
