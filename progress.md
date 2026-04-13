@@ -51,3 +51,7 @@
 2026-03-23 - E02/F04/S02: Persisted cluster manifests as `cluster_manifest.json` files inside each clustered day folder.
 2026-03-23 - E02/F04/S03: Added per-day summary blocks with accepted-photo, burst-group, final-cluster, and singleton counts.
 2026-03-23 - E02/F04/S04: Added manifest and pipeline rerun tests and verified Epic 2 with `15 passed, 1 skipped`.
+2026-04-13 - E03/F01/S01-S03: Added deterministic post-cluster duplicate detection scoped to members that share both a final cluster and a burst group, using configurable pixel similarity and duplicate-set grouping.
+2026-04-13 - E03/F02/S01-S03: Added deterministic duplicate winner selection, safe loser moves into `dayXX/rejected`, and coverage for clusters that collapse to a single surviving photo.
+2026-04-13 - E03/F03/S01-S03: Added stable survivor renaming to `cNNN_bNNN_NNN.ext` with two-phase collision-safe renames and rerun-safe behavior.
+2026-04-13 - E03/F04/S01-S03: Rewrote cluster manifests after cleanup, integrated Epic 3 into the main pipeline after clustering, refreshed planning docs for deterministic cleanup, and removed the deferred Epic 4 planning docs.

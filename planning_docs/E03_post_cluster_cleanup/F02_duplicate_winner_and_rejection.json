@@ -1,0 +1,28 @@
+{
+  "FeatureId": "02",
+  "FeatureName": "Deterministic winner selection and rejection moves",
+  "Description": "Choose one best survivor from each duplicate set using deterministic local rules and move duplicate losers into the day-level `rejected` folder.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Choose duplicate winners",
+      "StoryDescription": "Pick one survivor per duplicate set using blur score descending, then capture time ascending, then lexical path order as a deterministic tie-break.",
+      "AcceptanceCriteria": "Each duplicate set keeps exactly one deterministic winner without AI involvement.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Move duplicate losers safely",
+      "StoryDescription": "Move all rejected duplicate photos into `dayXX/rejected` using the existing safe file-move behavior and collision handling.",
+      "AcceptanceCriteria": "Duplicate losers are moved into the correct `rejected` folder without deleting files.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Handle clusters that collapse to one photo",
+      "StoryDescription": "Keep cleanup stable when duplicate rejection leaves a cluster with only one surviving photo.",
+      "AcceptanceCriteria": "Clusters that collapse to a single survivor continue through cleanup and are covered by automated tests.",
+      "IsDone": true
+    }
+  ]
+}

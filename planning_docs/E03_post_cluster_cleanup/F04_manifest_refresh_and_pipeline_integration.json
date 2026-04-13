@@ -1,0 +1,28 @@
+{
+  "FeatureId": "04",
+  "FeatureName": "Manifest refresh and pipeline integration",
+  "Description": "Rewrite each day's cluster manifest to match the surviving renamed photos and integrate the deterministic cleanup stage into the main pipeline after Epic 2 clustering.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Rewrite cluster manifests after cleanup",
+      "StoryDescription": "Update `cluster_manifest.json` in place so rejected duplicates are removed, surviving filenames and relative paths are renamed, and summary counts match the surviving photos.",
+      "AcceptanceCriteria": "The day-level manifest becomes the post-cleanup source of truth and matches the filesystem after cleanup.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Run cleanup after Epic 2 clustering",
+      "StoryDescription": "Add a new deterministic cleanup stage to the main pipeline so Epic 3 always runs immediately after Epic 2 manifest generation.",
+      "AcceptanceCriteria": "Pipeline runs clustering first, then deterministic cleanup, without introducing any AI dependencies.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Report cleanup outcomes",
+      "StoryDescription": "Extend summaries and logging with duplicate rejection counts, rename counts, and manifest rewrite counts, and cover the new end-to-end behavior with tests.",
+      "AcceptanceCriteria": "Run summaries and logs report the cleanup results and the full automated test suite passes.",
+      "IsDone": true
+    }
+  ]
+}
