@@ -1,0 +1,28 @@
+{
+  "FeatureId": "03",
+  "FeatureName": "Stable renaming of surviving day photos",
+  "Description": "Rename every surviving accepted photo in a day folder so files from the same cluster and burst group appear together and follow the `cNNN_bNNN_NNN.ext` convention.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define stable rename order",
+      "StoryDescription": "Order surviving photos by cluster ID, burst group ID, capture time, and lexical path so the generated names are deterministic.",
+      "AcceptanceCriteria": "Rename ordering is deterministic and produces stable per-burst sequence numbers.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Apply collision-safe renames",
+      "StoryDescription": "Rename surviving day-root photos with a two-phase temporary rename so no file is overwritten during normalization.",
+      "AcceptanceCriteria": "Survivors are renamed safely to `cNNN_bNNN_NNN.ext` while preserving their original extension.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Preserve rerun safety",
+      "StoryDescription": "Ensure already-normalized files are left unchanged on rerun when their generated target name matches the current filename.",
+      "AcceptanceCriteria": "Full pipeline reruns complete without unnecessary renames or collisions and automated tests cover the rerun path.",
+      "IsDone": true
+    }
+  ]
+}

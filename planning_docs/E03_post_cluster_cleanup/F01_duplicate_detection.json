@@ -1,0 +1,28 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Duplicate detection within cluster burst groups",
+  "Description": "Inspect the Epic 2 cluster manifest and identify near-duplicate photos only when they belong to the same final cluster and the same burst group.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Load grouped cleanup candidates",
+      "StoryDescription": "Read `cluster_manifest.json` and group members by `cluster_id` and `burst_group_id` so Epic 3 only compares photos inside the intended duplicate scope.",
+      "AcceptanceCriteria": "Cleanup code can enumerate candidate groups from the Epic 2 manifest without using any AI services.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Implement deterministic pixel similarity",
+      "StoryDescription": "Auto-orient, convert to RGB, resize to a canonical comparison size, and compute a deterministic visual similarity score with a default duplicate threshold of 0.99.",
+      "AcceptanceCriteria": "Near-duplicate detection is deterministic, configurable, and covered by automated tests.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Group duplicate-connected photos",
+      "StoryDescription": "Collapse pairwise duplicate matches into connected duplicate sets so one cleanup decision can be made per duplicate group.",
+      "AcceptanceCriteria": "Duplicate chains produce one connected duplicate set and automated tests cover grouped duplicate scenarios.",
+      "IsDone": true
+    }
+  ]
+}

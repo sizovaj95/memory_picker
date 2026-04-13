@@ -67,6 +67,15 @@ class ClusteringThresholds:
 
 
 @dataclass(frozen=True)
+class CleanupSettings:
+    """Config for deterministic post-cluster duplicate cleanup."""
+
+    enabled: bool = True
+    duplicate_similarity_threshold: float = 0.99
+    duplicate_compare_size: int = 256
+
+
+@dataclass(frozen=True)
 class AppSettings:
     """Settings used by the local pipeline."""
 
@@ -81,6 +90,7 @@ class AppSettings:
     quality_thresholds: QualityThresholds = field(default_factory=QualityThresholds)
     embedding_settings: EmbeddingSettings = field(default_factory=EmbeddingSettings)
     clustering_thresholds: ClusteringThresholds = field(default_factory=ClusteringThresholds)
+    cleanup_settings: CleanupSettings = field(default_factory=CleanupSettings)
     day_prefix: str = "day"
     collision_suffix_separator: str = "__dup"
     max_photos_per_day: int | None = None

@@ -146,6 +146,9 @@ class RunSummary:
     burst_group_count: int = 0
     final_cluster_count: int = 0
     manifests_written: int = 0
+    duplicate_photos_rejected: int = 0
+    renamed_photos: int = 0
+    cleanup_manifests_rewritten: int = 0
 
     def to_report(self) -> str:
         """Render a concise CLI report."""
@@ -165,6 +168,9 @@ class RunSummary:
             f"  burst_group_count: {self.burst_group_count}",
             f"  final_cluster_count: {self.final_cluster_count}",
             f"  manifests_written: {self.manifests_written}",
+            f"  duplicate_photos_rejected: {self.duplicate_photos_rejected}",
+            f"  renamed_photos: {self.renamed_photos}",
+            f"  cleanup_manifests_rewritten: {self.cleanup_manifests_rewritten}",
         ]
         return "\n".join(lines)
 
@@ -247,3 +253,13 @@ class ClusteringRunSummary:
     burst_group_count: int = 0
     cluster_count: int = 0
     manifests_written: int = 0
+
+
+@dataclass(frozen=True)
+class CleanupRunSummary:
+    """Epic 3 deterministic post-cluster cleanup summary."""
+
+    processed_days: int = 0
+    duplicate_photos_rejected: int = 0
+    renamed_photos: int = 0
+    manifests_rewritten: int = 0
