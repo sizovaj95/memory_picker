@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from memory_picker.categorization import run_cluster_categorization
 from memory_picker.cluster_pipeline import run_clustering_pipeline
 from memory_picker.config import AppSettings
 from memory_picker.day_assignment import (
@@ -29,8 +30,8 @@ from memory_picker.quality import assess_photo
 LOGGER = logging.getLogger("memory_picker.pipeline")
 
 
-def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
-    """Run intake, clustering, and deterministic post-cluster cleanup."""
+def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunSummary:
+    """Run intake, clustering, deterministic cleanup, and optional categorization."""
 
     inventory = scan_trip_root(settings)
     photo_items = [item for item in inventory if item.classification == MediaClassification.PHOTO]
@@ -87,6 +88,7 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
     file_summary = apply_move_plans(settings, move_plans)
     clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
     cleanup_summary = run_post_cluster_cleanup(settings)
+    categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
 
     summary = RunSummary(
         total_items=len(inventory),
@@ -109,10 +111,14 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
         duplicate_photos_rejected=cleanup_summary.duplicate_photos_rejected,
         renamed_photos=cleanup_summary.renamed_photos,
         cleanup_manifests_rewritten=cleanup_summary.manifests_rewritten,
+        categorized_days=categorization_summary.categorized_days,
+        classified_clusters=categorization_summary.classified_clusters,
+        categorized_photos_moved=categorization_summary.photos_moved,
+        categorization_manifests_rewritten=categorization_summary.manifests_rewritten,
     )
 
     LOGGER.info(
-        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s duplicate_rejections=%s renamed=%s",
+        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s duplicate_rejections=%s renamed=%s classified_clusters=%s categorized_moves=%s",
         summary.total_items,
         summary.photo_items,
         summary.accepted_photos,
@@ -125,5 +131,7 @@ def run_pipeline(settings: AppSettings, embedder=None) -> RunSummary:
         summary.final_cluster_count,
         summary.duplicate_photos_rejected,
         summary.renamed_photos,
+        summary.classified_clusters,
+        summary.categorized_photos_moved,
     )
     return summary

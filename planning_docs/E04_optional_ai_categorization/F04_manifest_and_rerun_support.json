@@ -1,0 +1,28 @@
+{
+  "FeatureId": "04",
+  "FeatureName": "Manifest refresh and rerun support",
+  "Description": "Rewrite cluster manifests after categorization and keep the earlier pipeline stages working on already categorized day folders.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Rewrite cluster manifest with category metadata",
+      "StoryDescription": "Update `cluster_manifest.json` with category folders in member paths and cluster-level categorization metadata such as category name, rationale, and source filename.",
+      "AcceptanceCriteria": "The post-categorization manifest matches the filesystem and stores the AI classification metadata for each cluster.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Support recursive accepted-photo discovery",
+      "StoryDescription": "Load accepted photos recursively from day folders while excluding `rejected`, `not_photo`, and manifest files so reruns still work after categorization.",
+      "AcceptanceCriteria": "Epic 2 and Epic 3 can run safely on already categorized folders and automated tests cover the recursive load behavior.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Integrate Epic 4 into pipeline reporting",
+      "StoryDescription": "Run categorization after Epic 3 when enabled and extend summaries and logs with classified cluster counts, moved photo counts, and manifest rewrite counts.",
+      "AcceptanceCriteria": "The pipeline can optionally run categorization, the full test suite passes, and the run summary reports Epic 4 outcomes.",
+      "IsDone": true
+    }
+  ]
+}

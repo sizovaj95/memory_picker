@@ -115,11 +115,24 @@ def build_accepted_photo_record(day_path: Path, photo_path: Path, settings: AppS
 
 
 def load_day_photo_records(day_path: Path, settings: AppSettings) -> list[AcceptedPhotoRecord]:
-    """Load accepted photo records from the root of a day folder only."""
+    """Load accepted photo records recursively, excluding rejected and not_photo."""
 
     records: list[AcceptedPhotoRecord] = []
-    for path in sorted(day_path.iterdir(), key=lambda item: item.name.lower()):
-        if path.is_dir():
+    skipped_directory_names = {
+        settings.managed_folders.rejected,
+        settings.managed_folders.not_photo,
+    }
+    candidate_paths = sorted(
+        [
+            path
+            for path in day_path.rglob("*")
+            if path.is_file()
+            and not any(part in skipped_directory_names for part in path.relative_to(day_path).parts[:-1])
+        ],
+        key=lambda item: str(item.relative_to(day_path)).lower(),
+    )
+    for path in candidate_paths:
+        if path.name == "cluster_manifest.json":
             continue
         extension = path.suffix.lower().lstrip(".")
         if extension not in settings.supported_photo_extensions:

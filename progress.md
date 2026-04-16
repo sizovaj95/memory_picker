@@ -55,3 +55,7 @@
 2026-04-13 - E03/F02/S01-S03: Added deterministic duplicate winner selection, safe loser moves into `dayXX/rejected`, and coverage for clusters that collapse to a single surviving photo.
 2026-04-13 - E03/F03/S01-S03: Added stable survivor renaming to `cNNN_bNNN_NNN.ext` with two-phase collision-safe renames and rerun-safe behavior.
 2026-04-13 - E03/F04/S01-S03: Rewrote cluster manifests after cleanup, integrated Epic 3 into the main pipeline after clustering, refreshed planning docs for deterministic cleanup, and removed the deferred Epic 4 planning docs.
+2026-04-13 - E04/F01/S01-S02: Added optional categorization settings with configurable OpenAI taxonomy defaults for people, animals, food, nature, city, buildings, architecture, and other.
+2026-04-13 - E04/F02/S01-S03: Added a mockable OpenAI cluster categorizer with structured prompt/schema generation and explicit exclusion of `rejected` and `not_photo` files from AI classification.
+2026-04-13 - E04/F03/S01-S02: Added per-day category materialization that moves accepted photos into category folders while preserving Epic 3 filenames and leaving rejected/non-photo files untouched.
+2026-04-13 - E04/F04/S01-S03: Rewrote cluster manifests with category metadata, made accepted-photo loading recursive for rerun safety after categorization, integrated Epic 4 into the pipeline, and added automated tests for the optional categorization path.

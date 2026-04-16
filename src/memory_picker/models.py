@@ -149,6 +149,10 @@ class RunSummary:
     duplicate_photos_rejected: int = 0
     renamed_photos: int = 0
     cleanup_manifests_rewritten: int = 0
+    categorized_days: int = 0
+    classified_clusters: int = 0
+    categorized_photos_moved: int = 0
+    categorization_manifests_rewritten: int = 0
 
     def to_report(self) -> str:
         """Render a concise CLI report."""
@@ -171,6 +175,10 @@ class RunSummary:
             f"  duplicate_photos_rejected: {self.duplicate_photos_rejected}",
             f"  renamed_photos: {self.renamed_photos}",
             f"  cleanup_manifests_rewritten: {self.cleanup_manifests_rewritten}",
+            f"  categorized_days: {self.categorized_days}",
+            f"  classified_clusters: {self.classified_clusters}",
+            f"  categorized_photos_moved: {self.categorized_photos_moved}",
+            f"  categorization_manifests_rewritten: {self.categorization_manifests_rewritten}",
         ]
         return "\n".join(lines)
 
@@ -262,4 +270,24 @@ class CleanupRunSummary:
     processed_days: int = 0
     duplicate_photos_rejected: int = 0
     renamed_photos: int = 0
+    manifests_rewritten: int = 0
+
+
+@dataclass(frozen=True)
+class ClusterCategorizationResult:
+    """Classification result for one cluster representative image."""
+
+    category_name: str
+    rationale: str
+    model_name: str
+    response_id: str | None = None
+
+
+@dataclass(frozen=True)
+class CategorizationRunSummary:
+    """Epic 4 optional AI categorization summary."""
+
+    categorized_days: int = 0
+    classified_clusters: int = 0
+    photos_moved: int = 0
     manifests_rewritten: int = 0

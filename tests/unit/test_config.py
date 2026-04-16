@@ -13,3 +13,28 @@ def test_build_settings_loads_defaults(tmp_path):
     assert settings.managed_folders.rejected == "rejected"
     assert settings.quality_thresholds.blur_threshold > 0
     assert settings.cleanup_settings.duplicate_similarity_threshold == 0.99
+    assert settings.categorization_settings.enabled is False
+    assert [category.name for category in settings.categorization_settings.categories] == [
+        "people",
+        "animals",
+        "food",
+        "nature",
+        "city",
+        "architecture",
+        "other",
+    ]
+
+
+def test_build_settings_loads_openai_key_from_dotenv(tmp_path, monkeypatch):
+    trip_root = tmp_path / "trip"
+    trip_root.mkdir()
+    dotenv_root = tmp_path / "workspace"
+    dotenv_root.mkdir()
+    (dotenv_root / ".env").write_text("OPENAI_API_KEY=from-dotenv\n", encoding="utf-8")
+
+    monkeypatch.chdir(dotenv_root)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    settings = build_settings(trip_root)
+
+    assert settings.categorization_settings.openai_api_key == "from-dotenv"

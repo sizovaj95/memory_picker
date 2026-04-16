@@ -1,0 +1,28 @@
+{
+  "FeatureId": "02",
+  "FeatureName": "OpenAI cluster classification",
+  "Description": "Classify one deterministic representative image per cluster using OpenAI and apply the returned category to the whole cluster.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Build structured categorization prompt and schema",
+      "StoryDescription": "Create a prompt and strict JSON schema that force one category choice from the configured taxonomy and request a short rationale.",
+      "AcceptanceCriteria": "Prompt and schema generation are deterministic and covered by automated tests.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Implement OpenAI-backed cluster categorizer",
+      "StoryDescription": "Send one representative image per cluster to OpenAI using the Responses API and parse the structured category result.",
+      "AcceptanceCriteria": "A mockable categorizer abstraction exists and the default implementation can classify one cluster representative image.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "03",
+      "StoryName": "Exclude rejected and non-photo files",
+      "StoryDescription": "Ensure categorization candidates come only from accepted cluster-manifest members and never from `rejected` or `not_photo` folders.",
+      "AcceptanceCriteria": "Automated tests verify rejected and non-photo files are not sent to AI and are not considered for categorization.",
+      "IsDone": true
+    }
+  ]
+}
