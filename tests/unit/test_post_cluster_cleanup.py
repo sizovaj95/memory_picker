@@ -14,8 +14,8 @@ from tests.helpers import write_checkerboard_image, write_color_block_image
 def test_run_post_cluster_cleanup_rejects_duplicate_losers_and_rewrites_manifest(tmp_path):
     root = tmp_path / "trip"
     day_path = root / "day01"
-    rejected_path = day_path / "rejected"
-    rejected_path.mkdir(parents=True)
+    duplicate_rejected_path = day_path / "_rejected" / "duplicates"
+    duplicate_rejected_path.mkdir(parents=True)
 
     write_checkerboard_image(day_path / "a.jpg", capture_datetime=datetime(2026, 1, 1, 10, 0, 0))
     write_checkerboard_image(day_path / "b.jpg", capture_datetime=datetime(2026, 1, 1, 10, 0, 1))
@@ -66,8 +66,8 @@ def test_run_post_cluster_cleanup_rejects_duplicate_losers_and_rewrites_manifest
     assert not (day_path / "a.jpg").exists()
     assert not (day_path / "b.jpg").exists()
     assert not (day_path / "c.jpg").exists()
-    assert (rejected_path / "a.jpg").exists()
-    assert (rejected_path / "c.jpg").exists()
+    assert (duplicate_rejected_path / "a.jpg").exists()
+    assert (duplicate_rejected_path / "c.jpg").exists()
 
     payload = json.loads((day_path / "cluster_manifest.json").read_text(encoding="utf-8"))
     assert payload["summary"]["accepted_photo_count"] == 1

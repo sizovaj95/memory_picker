@@ -14,15 +14,15 @@ def test_load_day_photo_records_reads_accepted_images_recursively_and_skips_mana
     root = tmp_path / "trip"
     day_path = root / "day01"
     day_path.mkdir(parents=True)
-    (day_path / "rejected").mkdir()
-    (day_path / "not_photo").mkdir()
+    (day_path / "_rejected" / "low_quality").mkdir(parents=True)
+    (day_path / "_rejected" / "not_photo").mkdir(parents=True)
     (day_path / "people").mkdir()
 
     accepted = write_checkerboard_image(day_path / "accepted.jpg")
     categorized = write_checkerboard_image(day_path / "people" / "categorized.jpg")
-    write_checkerboard_image(day_path / "rejected" / "ignored.jpg")
+    write_checkerboard_image(day_path / "_rejected" / "low_quality" / "ignored.jpg")
     write_text_file(day_path / "cluster_manifest.json", "{}")
-    write_text_file(day_path / "not_photo" / "clip.mov", "video")
+    write_text_file(day_path / "_rejected" / "not_photo" / "clip.mov", "video")
     set_mtime(accepted, datetime(2026, 2, 3, 14, 0, 0))
     set_mtime(categorized, datetime(2026, 2, 3, 15, 0, 0))
 

@@ -112,6 +112,7 @@ class FileMovePlan:
     source_path: Path
     day_name: str
     destination_category: DestinationCategory
+    destination_subfolder: str | None = None
 
 
 @dataclass(frozen=True)

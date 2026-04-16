@@ -45,13 +45,13 @@ def test_build_category_prompt_includes_rule_text(tmp_path):
 def test_run_cluster_categorization_moves_accepted_photos_and_rewrites_manifest(tmp_path):
     root = tmp_path / "trip"
     day_path = root / "day01"
-    (day_path / "rejected").mkdir(parents=True)
-    (day_path / "not_photo").mkdir()
+    (day_path / "_rejected" / "low_quality").mkdir(parents=True)
+    (day_path / "_rejected" / "not_photo").mkdir(parents=True)
     write_checkerboard_image(day_path / "c001_b001_001.jpg", capture_datetime=datetime(2026, 1, 1, 10, 0, 0))
     write_checkerboard_image(day_path / "c001_b002_001.jpg", capture_datetime=datetime(2026, 1, 1, 10, 1, 0))
     write_checkerboard_image(day_path / "c002_b002_001.jpg", capture_datetime=datetime(2026, 1, 1, 11, 0, 0))
-    write_checkerboard_image(day_path / "rejected" / "ignore.jpg")
-    write_checkerboard_image(day_path / "not_photo" / "also_ignore.jpg")
+    write_checkerboard_image(day_path / "_rejected" / "low_quality" / "ignore.jpg")
+    write_checkerboard_image(day_path / "_rejected" / "not_photo" / "also_ignore.jpg")
     _write_cluster_manifest(
         day_path,
         {
@@ -132,8 +132,8 @@ def test_run_cluster_categorization_moves_accepted_photos_and_rewrites_manifest(
     assert (day_path / "architecture" / "c001_b001_001.jpg").exists()
     assert (day_path / "architecture" / "c001_b002_001.jpg").exists()
     assert (day_path / "other" / "c002_b002_001.jpg").exists()
-    assert (day_path / "rejected" / "ignore.jpg").exists()
-    assert (day_path / "not_photo" / "also_ignore.jpg").exists()
+    assert (day_path / "_rejected" / "low_quality" / "ignore.jpg").exists()
+    assert (day_path / "_rejected" / "not_photo" / "also_ignore.jpg").exists()
     assert categorizer.calls == [
         ("day01", "cluster001", "c001_b001_001.jpg"),
         ("day01", "cluster002", "c002_b002_001.jpg"),

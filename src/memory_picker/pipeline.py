@@ -20,6 +20,9 @@ from memory_picker.models import (
     DestinationCategory,
     FileMovePlan,
     MediaClassification,
+    PhotoRecord,
+    QualityAssessment,
+    RejectionReason,
     RunSummary,
     TimestampSource,
 )
@@ -28,6 +31,32 @@ from memory_picker.preprocessing import iter_day_directories
 from memory_picker.quality import assess_photo
 
 LOGGER = logging.getLogger("memory_picker.pipeline")
+
+
+def _build_photo_move_plan(
+    record: PhotoRecord,
+    day_name: str,
+    assessment: QualityAssessment,
+    settings: AppSettings,
+) -> FileMovePlan:
+    """Build the day move plan for one photo after quality assessment."""
+
+    if assessment.is_accepted:
+        return FileMovePlan(
+            source_path=record.source_path,
+            day_name=day_name,
+            destination_category=DestinationCategory.ACCEPTED,
+        )
+
+    destination_subfolder = settings.managed_folders.low_quality
+    if RejectionReason.CORRUPT in assessment.rejection_reasons:
+        destination_subfolder = settings.managed_folders.not_photo
+    return FileMovePlan(
+        source_path=record.source_path,
+        day_name=day_name,
+        destination_category=DestinationCategory.REJECTED,
+        destination_subfolder=destination_subfolder,
+    )
 
 
 def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunSummary:
@@ -57,17 +86,7 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
     for record in photo_records:
         assignment = photo_assignments_by_path[record.source_path]
         assessment = assessments_by_path[record.source_path]
-        move_plans.append(
-            FileMovePlan(
-                source_path=record.source_path,
-                day_name=assignment.day_name,
-                destination_category=(
-                    DestinationCategory.ACCEPTED
-                    if assessment.is_accepted
-                    else DestinationCategory.REJECTED
-                ),
-            )
-        )
+        move_plans.append(_build_photo_move_plan(record, assignment.day_name, assessment, settings))
 
     for item in artifact_items:
         captured_on = artifact_dates[item.source_path]
