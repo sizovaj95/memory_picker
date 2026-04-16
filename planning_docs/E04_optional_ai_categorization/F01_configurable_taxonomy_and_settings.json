@@ -1,0 +1,21 @@
+{
+  "FeatureId": "01",
+  "FeatureName": "Configurable taxonomy and OpenAI settings",
+  "Description": "Add optional Epic 4 settings for OpenAI categorization, including configurable category names and rule text.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Define categorization settings",
+      "StoryDescription": "Add optional categorization settings covering enablement, OpenAI credentials, model name, category definitions, and image upload sizing.",
+      "AcceptanceCriteria": "The project has typed settings for optional AI categorization and defaults include all configured categories.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Define configurable category taxonomy",
+      "StoryDescription": "Represent categories and their rules in one configurable structure so prompt generation and validation use the same taxonomy.",
+      "AcceptanceCriteria": "Category names and rules are centrally defined and can be reused without duplicating logic.",
+      "IsDone": true
+    }
+  ]
+}

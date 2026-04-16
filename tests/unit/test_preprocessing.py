@@ -10,24 +10,28 @@ from memory_picker.preprocessing import load_day_photo_records
 from tests.helpers import set_mtime, write_checkerboard_image, write_color_block_image, write_text_file
 
 
-def test_load_day_photo_records_only_reads_day_root_supported_images(tmp_path):
+def test_load_day_photo_records_reads_accepted_images_recursively_and_skips_managed_dirs(tmp_path):
     root = tmp_path / "trip"
     day_path = root / "day01"
     day_path.mkdir(parents=True)
     (day_path / "rejected").mkdir()
     (day_path / "not_photo").mkdir()
+    (day_path / "people").mkdir()
 
     accepted = write_checkerboard_image(day_path / "accepted.jpg")
+    categorized = write_checkerboard_image(day_path / "people" / "categorized.jpg")
     write_checkerboard_image(day_path / "rejected" / "ignored.jpg")
     write_text_file(day_path / "cluster_manifest.json", "{}")
     write_text_file(day_path / "not_photo" / "clip.mov", "video")
     set_mtime(accepted, datetime(2026, 2, 3, 14, 0, 0))
+    set_mtime(categorized, datetime(2026, 2, 3, 15, 0, 0))
 
     records = load_day_photo_records(day_path, build_settings(root))
 
-    assert [record.filename for record in records] == ["accepted.jpg"]
+    assert [record.filename for record in records] == ["accepted.jpg", "categorized.jpg"]
     assert records[0].day_name == "day01"
     assert records[0].relative_path.as_posix() == "day01/accepted.jpg"
+    assert records[1].relative_path.as_posix() == "day01/people/categorized.jpg"
 
 
 def test_load_day_photo_records_extracts_stable_descriptors(tmp_path):

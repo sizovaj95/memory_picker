@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from memory_picker.models import AcceptedPhotoRecord, ImageEmbedding
+from memory_picker.models import AcceptedPhotoRecord, ClusterCategorizationResult, ImageEmbedding
 
 
 def write_checkerboard_image(
@@ -136,3 +136,29 @@ class FilenameMockEmbedder:
             )
             for record in photo_records
         ]
+
+
+class MockClusterCategorizer:
+    """Mock Epic 4 categorizer returning deterministic cluster categories."""
+
+    def __init__(
+        self,
+        categories_by_cluster_id: dict[str, str],
+        rationales_by_cluster_id: dict[str, str] | None = None,
+    ) -> None:
+        self.categories_by_cluster_id = categories_by_cluster_id
+        self.rationales_by_cluster_id = rationales_by_cluster_id or {}
+        self.calls: list[tuple[str, str, str]] = []
+
+    def categorize_cluster(self, day_name, cluster, image_path, categorization_settings) -> ClusterCategorizationResult:
+        self.calls.append((day_name, cluster["cluster_id"], image_path.name))
+        cluster_id = cluster["cluster_id"]
+        return ClusterCategorizationResult(
+            category_name=self.categories_by_cluster_id[cluster_id],
+            rationale=self.rationales_by_cluster_id.get(
+                cluster_id,
+                f"Mock rationale for {cluster_id}",
+            ),
+            model_name="mock-categorizer",
+            response_id=f"mock-{cluster_id}",
+        )

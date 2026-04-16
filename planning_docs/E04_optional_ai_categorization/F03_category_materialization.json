@@ -1,0 +1,21 @@
+{
+  "FeatureId": "03",
+  "FeatureName": "Per-day category materialization",
+  "Description": "Move accepted photos into per-day category folders while keeping the Epic 3 filenames unchanged.",
+  "Stories": [
+    {
+      "StoryId": "01",
+      "StoryName": "Move accepted photos into category folders",
+      "StoryDescription": "After classifying a cluster, move all accepted member photos into `dayXX/<category>/` using the existing filenames from Epic 3.",
+      "AcceptanceCriteria": "Accepted photos are sorted into per-day category folders and no extra trip-root category view is created.",
+      "IsDone": true
+    },
+    {
+      "StoryId": "02",
+      "StoryName": "Keep rejected and not_photo untouched",
+      "StoryDescription": "Leave files already located in `rejected` and `not_photo` exactly where they are.",
+      "AcceptanceCriteria": "Epic 4 does not move, rename, or classify files from `rejected` or `not_photo`.",
+      "IsDone": true
+    }
+  ]
+}
