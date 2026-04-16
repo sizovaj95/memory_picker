@@ -18,9 +18,15 @@ def build_destination_path(settings: AppSettings, plan: FileMovePlan) -> Path:
     day_root = settings.root_path / plan.day_name
     if plan.destination_category == DestinationCategory.ACCEPTED:
         return day_root / plan.source_path.name
-    if plan.destination_category == DestinationCategory.REJECTED:
-        return day_root / settings.managed_folders.rejected / plan.source_path.name
-    return day_root / settings.managed_folders.not_photo / plan.source_path.name
+    if plan.destination_category == DestinationCategory.NOT_PHOTO:
+        return (
+            day_root
+            / settings.managed_folders.rejected
+            / settings.managed_folders.not_photo
+            / plan.source_path.name
+        )
+    rejected_subfolder = plan.destination_subfolder or settings.managed_folders.low_quality
+    return day_root / settings.managed_folders.rejected / rejected_subfolder / plan.source_path.name
 
 
 def resolve_collision(target_path: Path, settings: AppSettings) -> Path:
@@ -51,7 +57,12 @@ def apply_move_plans(settings: AppSettings, move_plans: list[FileMovePlan]) -> F
 
     ordered_plans = sorted(
         move_plans,
-        key=lambda plan: (plan.day_name, plan.destination_category.value, plan.source_path.name.lower()),
+        key=lambda plan: (
+            plan.day_name,
+            plan.destination_category.value,
+            plan.destination_subfolder or "",
+            plan.source_path.name.lower(),
+        ),
     )
 
     for plan in ordered_plans:

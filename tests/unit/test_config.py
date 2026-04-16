@@ -10,7 +10,10 @@ def test_build_settings_loads_defaults(tmp_path):
 
     assert settings.root_path == tmp_path.resolve()
     assert "jpg" in settings.supported_photo_extensions
-    assert settings.managed_folders.rejected == "rejected"
+    assert settings.managed_folders.rejected == "_rejected"
+    assert settings.managed_folders.low_quality == "low_quality"
+    assert settings.managed_folders.not_photo == "not_photo"
+    assert settings.managed_folders.duplicates == "duplicates"
     assert settings.quality_thresholds.blur_threshold > 0
     assert settings.cleanup_settings.duplicate_similarity_threshold == 0.99
     assert settings.categorization_settings.enabled is False

@@ -20,13 +20,13 @@ Given a flat folder of trip media, the pipeline currently works like this:
 2. Read capture dates from EXIF when possible, otherwise fall back to filesystem modification time.
 3. Create `day01`, `day02`, and so on.
 4. Run local quality checks to reject blurry, too-dark, too-bright, or corrupt photos.
-5. Move rejected photos into `dayXX/rejected`.
-6. Move videos and other non-photo artifacts into `dayXX/not_photo`.
+5. Move low-quality photos into `dayXX/_rejected/low_quality`.
+6. Move videos, non-photo artifacts, and corrupt files into `dayXX/_rejected/not_photo`.
 7. Keep accepted photos in the day root.
 8. Build deterministic burst groups and semantic clusters for each day.
 9. Write a `cluster_manifest.json` for each day.
 10. Detect near-duplicates only within the same cluster and same burst group.
-11. Keep the best deterministic winner and move duplicate losers into `rejected`.
+11. Keep the best deterministic winner and move duplicate losers into `dayXX/_rejected/duplicates`.
 12. Rename survivors to names like `c001_b001_001.jpg`.
 13. Optionally send one representative image per cluster to OpenAI for categorization.
 14. If categorization is enabled, move accepted photos into per-day category folders such as `day01/people` or `day02/architecture`.
@@ -40,14 +40,18 @@ After a run, a trip folder can look like this:
 ```text
 MyTrip/
 ├── day01/
-│   ├── rejected/
-│   ├── not_photo/
+│   ├── _rejected/
+│   │   ├── low_quality/
+│   │   ├── not_photo/
+│   │   └── duplicates/
 │   ├── architecture/
 │   │   └── c001_b001_001.jpg
 │   └── cluster_manifest.json
 └── day02/
-    ├── rejected/
-    ├── not_photo/
+    ├── _rejected/
+    │   ├── low_quality/
+    │   ├── not_photo/
+    │   └── duplicates/
     ├── people/
     │   ├── c001_b001_001.jpg
     │   └── c001_b002_001.jpg

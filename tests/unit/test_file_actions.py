@@ -22,7 +22,12 @@ def test_apply_move_plans_creates_expected_day_structure(tmp_path):
         build_settings(root),
         [
             FileMovePlan(accepted, "day01", DestinationCategory.ACCEPTED),
-            FileMovePlan(rejected, "day01", DestinationCategory.REJECTED),
+            FileMovePlan(
+                rejected,
+                "day01",
+                DestinationCategory.REJECTED,
+                destination_subfolder="low_quality",
+            ),
             FileMovePlan(artifact, "day01", DestinationCategory.NOT_PHOTO),
         ],
     )
@@ -31,8 +36,8 @@ def test_apply_move_plans_creates_expected_day_structure(tmp_path):
     assert summary.rejected_moved == 1
     assert summary.artifacts_moved == 1
     assert (root / "day01" / "good.jpg").exists()
-    assert (root / "day01" / "rejected" / "bad.jpg").exists()
-    assert (root / "day01" / "not_photo" / "clip.mov").exists()
+    assert (root / "day01" / "_rejected" / "low_quality" / "bad.jpg").exists()
+    assert (root / "day01" / "_rejected" / "not_photo" / "clip.mov").exists()
 
 
 def test_apply_move_plans_is_collision_safe(tmp_path):

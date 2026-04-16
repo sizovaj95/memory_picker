@@ -32,8 +32,10 @@ class ManagedFolderNames:
     """Folder names reserved by the tool."""
 
     to_print: str = "to_print"
-    rejected: str = "rejected"
+    rejected: str = "_rejected"
+    low_quality: str = "low_quality"
     not_photo: str = "not_photo"
+    duplicates: str = "duplicates"
 
 
 @dataclass(frozen=True)
@@ -123,7 +125,7 @@ DEFAULT_CATEGORY_DEFINITIONS = (
 class CategorizationSettings:
     """Config for optional OpenAI-backed post-cleanup categorization."""
 
-    enabled: bool = True
+    enabled: bool = False
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     categories: tuple[CategoryDefinition, ...] = field(default_factory=lambda: DEFAULT_CATEGORY_DEFINITIONS)

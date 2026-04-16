@@ -90,6 +90,7 @@ def _cleanup_day(day_path: Path, settings: AppSettings) -> CleanupRunSummary:
             source_path=(settings.root_path / relative_path).resolve(),
             day_name=day_path.name,
             destination_category=DestinationCategory.REJECTED,
+            destination_subfolder=settings.managed_folders.duplicates,
         )
         for relative_path in sorted(loser_relative_paths)
     ]
