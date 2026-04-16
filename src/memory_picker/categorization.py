@@ -251,6 +251,8 @@ def _move_cluster_members_to_category_folders(
     cluster_results: dict[str, tuple[ClusterCategorizationResult, str]],
     settings: AppSettings,
 ) -> int:
+    """Move accepted cluster members into their per-day category folders."""
+
     moved_count = 0
     for cluster in payload["clusters"]:
         categorization = cluster_results.get(cluster["cluster_id"])
@@ -278,6 +280,8 @@ def _rewrite_categorized_manifest_payload(
     cluster_results: dict[str, tuple[ClusterCategorizationResult, str]],
     settings: AppSettings,
 ) -> dict:
+    """Rewrite a day manifest so accepted members live under category folders."""
+
     category_counts: dict[str, int] = {}
     rewritten_clusters: list[dict] = []
     for cluster in payload["clusters"]:
@@ -296,9 +300,7 @@ def _rewrite_categorized_manifest_payload(
             )
         if not rewritten_members:
             continue
-        category_counts[result.category_name] = category_counts.get(result.category_name, 0) + len(
-            rewritten_members
-        )
+        category_counts[result.category_name] = category_counts.get(result.category_name, 0) + len(rewritten_members)
         rewritten_clusters.append(
             {
                 **cluster,
@@ -335,6 +337,8 @@ def _build_openai_image_input(
     max_dimension: int,
     jpeg_quality: int,
 ) -> dict:
+    """Build a resized JPEG data URL payload for one OpenAI vision request."""
+
     register_heif_support()
     with Image.open(image_path) as image:
         normalized = ImageOps.exif_transpose(image).convert("RGB")

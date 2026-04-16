@@ -79,6 +79,8 @@ def run_post_cluster_cleanup(settings: AppSettings) -> CleanupRunSummary:
 
 
 def _cleanup_day(day_path: Path, settings: AppSettings) -> CleanupRunSummary:
+    """Clean one day folder by rejecting duplicates, renaming survivors, and rewriting its manifest."""
+
     payload = load_cluster_manifest(day_path)
     image_cache: dict[Path, np.ndarray] = {}
     loser_relative_paths = _collect_duplicate_losers(day_path, payload, settings, image_cache)
@@ -127,6 +129,8 @@ def _collect_duplicate_losers(
     settings: AppSettings,
     image_cache: dict[Path, np.ndarray],
 ) -> set[str]:
+    """Return relative paths for duplicate photos that lose their within-burst comparison."""
+
     loser_relative_paths: set[str] = set()
 
     for cluster in payload["clusters"]:
@@ -158,6 +162,8 @@ def _find_duplicate_sets(
     settings: CleanupSettings,
     image_cache: dict[Path, np.ndarray],
 ) -> list[list[dict]]:
+    """Group connected duplicate members using the configured pixel-similarity threshold."""
+
     disjoint_set = _DisjointSet.create(len(members))
 
     for left_index, left_member in enumerate(members):
@@ -186,10 +192,14 @@ def _find_duplicate_sets(
 
 
 def _choose_duplicate_winner(duplicate_set: list[dict]) -> dict:
+    """Return the deterministic winner from one connected duplicate set."""
+
     return sorted(duplicate_set, key=_duplicate_winner_sort_key)[0]
 
 
 def _duplicate_winner_sort_key(member: dict) -> tuple[float, str, str]:
+    """Sort duplicate candidates by blur, then capture time, then stable path order."""
+
     return (
         -(member.get("blur_score") or 0.0),
         member["captured_at"],
@@ -216,6 +226,8 @@ def _load_comparison_image(
     compare_size: int,
     image_cache: dict[Path, np.ndarray],
 ) -> np.ndarray:
+    """Load, normalize, resize, and cache one image for duplicate comparison."""
+
     cached = image_cache.get(path)
     if cached is not None:
         return cached
@@ -236,6 +248,8 @@ def _rename_surviving_members(
     loser_relative_paths: set[str],
     settings: AppSettings,
 ) -> dict[str, str]:
+    """Rename surviving accepted photos into stable cluster/burst-based filenames."""
+
     surviving_members = [
         {**member, "cluster_id": cluster["cluster_id"]}
         for cluster in payload["clusters"]
@@ -280,6 +294,8 @@ def _rename_surviving_members(
 
 
 def _apply_two_phase_renames(rename_plan: dict[Path, Path]) -> None:
+    """Rename files via temporary names so swaps and cycles stay collision-safe."""
+
     if not rename_plan:
         return
 
@@ -309,6 +325,8 @@ def _rewrite_cluster_manifest_payload(
     rename_lookup: dict[str, str],
     loser_relative_paths: set[str],
 ) -> dict:
+    """Rewrite the manifest after duplicate rejection and survivor renaming."""
+
     rewritten_clusters: list[dict] = []
     surviving_members_by_burst_group: dict[str, list[dict]] = defaultdict(list)
 
@@ -385,6 +403,8 @@ def _rewrite_cluster_manifest_payload(
 
 
 def _rewrite_member(member: dict, rename_lookup: dict[str, str]) -> dict:
+    """Rewrite one manifest member entry with its renamed filename and path."""
+
     new_relative_path = rename_lookup[member["relative_path"]]
     return {
         **member,
@@ -397,6 +417,8 @@ def _choose_cluster_representative_member(
     original_representative_filename: str,
     surviving_members: list[dict],
 ) -> dict:
+    """Keep the original representative when possible, otherwise choose a stable fallback."""
+
     for member in surviving_members:
         if member["filename"] == original_representative_filename:
             return member
@@ -413,6 +435,8 @@ def _choose_cluster_representative_member(
 
 
 def _extract_numeric_suffix(value: str, pattern: re.Pattern[str]) -> int:
+    """Extract the numeric suffix from identifiers like cluster001 or burst003."""
+
     match = pattern.fullmatch(value)
     if match is None:
         raise ValueError(f"Expected numbered identifier, got: {value}")

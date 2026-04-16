@@ -27,7 +27,11 @@ def build_cluster_manifest_payload(
     """Build the JSON-serializable manifest payload for one day."""
 
     records_by_path = {record.source_path: record for record in photo_records}
-    burst_group_by_id = {group.burst_group_id: group for group in burst_groups}
+    burst_group_id_by_member_path = {
+        member_path: group.burst_group_id
+        for group in burst_groups
+        for member_path in group.member_paths
+    }
 
     clusters_payload: list[dict] = []
     singleton_cluster_count = 0
@@ -40,9 +44,7 @@ def build_cluster_manifest_payload(
         members_payload: list[dict] = []
         for member_path in sorted(cluster.member_paths, key=lambda path: str(path)):
             record = records_by_path[member_path]
-            burst_group_id = next(
-                group.burst_group_id for group in burst_groups if member_path in group.member_paths
-            )
+            burst_group_id = burst_group_id_by_member_path[member_path]
             members_payload.append(
                 {
                     "filename": record.filename,

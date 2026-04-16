@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "memory-picker"
 version = "0.1.0"
 description = "Deterministic local photo intake and filtering pipeline for trip albums."
-readme = "instructions.md"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.2.0",

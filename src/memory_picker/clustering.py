@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 
 from memory_picker.config import ClusteringThresholds
-from memory_picker.models import AcceptedPhotoRecord, BurstGroup, DayCluster, ImageEmbedding
+from memory_picker.models import AcceptedPhotoRecord, BurstGroup, DayCluster
 
 
 @dataclass
@@ -245,5 +244,3 @@ def build_day_clusters(
         )
 
     return day_clusters
-
-#TODO make work with gpu
