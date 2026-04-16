@@ -14,7 +14,7 @@ from memory_picker.pipeline import run_pipeline
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEBUG_ROOT = REPO_ROOT / "japan_trip"
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 
 
 def main() -> int:
