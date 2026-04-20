@@ -15,6 +15,7 @@ from tests.helpers import (
     set_mtime,
     write_checkerboard_image,
     write_dark_image,
+    write_disguised_heif_image,
     write_text_file,
 )
 
@@ -154,3 +155,39 @@ def test_run_pipeline_optionally_categorizes_clusters_and_is_safe_on_rerun(tmp_p
     assert rerun_summary.categorized_days == 2
     assert (root / "day01" / "architecture" / "c001_b001_001.jpg").exists()
     assert (root / "day02" / "architecture" / "c001_b001_001.png").exists()
+
+
+def test_run_pipeline_converts_heif_before_inventory_and_processing(tmp_path):
+    root = tmp_path / "trip"
+    root.mkdir()
+
+    heif_input = write_disguised_heif_image(
+        root / "accepted_day_one.heic",
+        capture_datetime=datetime(2026, 1, 2, 9, 30, 0),
+    )
+    accepted_day_two = write_checkerboard_image(root / "accepted_day_two.png")
+    artifact = write_text_file(root / "clip.MOV", "video-placeholder")
+
+    set_mtime(accepted_day_two, datetime(2026, 1, 3, 14, 0, 0))
+    set_mtime(artifact, datetime(2026, 1, 2, 15, 0, 0))
+
+    settings = build_settings(root)
+    embedder = FilenameMockEmbedder(
+        {
+            "accepted_day_one.jpg": [1.0, 0.0, 0.0],
+            "accepted_day_two.png": [0.0, 1.0, 0.0],
+            "c001_b001_001.jpg": [1.0, 0.0, 0.0],
+            "c001_b001_001.png": [0.0, 1.0, 0.0],
+        }
+    )
+
+    summary = run_pipeline(settings, embedder=embedder)
+
+    assert summary.converted_heif_files == 1
+    assert summary.deleted_original_heif_files == 1
+    assert summary.photo_items == 2
+    assert not heif_input.exists()
+    assert not (root / "accepted_day_one.jpg").exists()
+    assert (root / "day01" / "c001_b001_001.jpg").exists()
+    assert (root / "day02" / "c001_b001_001.png").exists()
+    assert (root / "day01" / "_rejected" / "not_photo" / "clip.MOV").exists()

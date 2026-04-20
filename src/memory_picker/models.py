@@ -138,6 +138,8 @@ class RunSummary:
     photo_items: int
     non_photo_items: int
     unsupported_items: int
+    converted_heif_files: int
+    deleted_original_heif_files: int
     accepted_photos: int
     rejected_photos: int
     day_count: int
@@ -164,6 +166,8 @@ class RunSummary:
             f"  photo_items: {self.photo_items}",
             f"  non_photo_items: {self.non_photo_items}",
             f"  unsupported_items: {self.unsupported_items}",
+            f"  converted_heif_files: {self.converted_heif_files}",
+            f"  deleted_original_heif_files: {self.deleted_original_heif_files}",
             f"  accepted_photos: {self.accepted_photos}",
             f"  rejected_photos: {self.rejected_photos}",
             f"  day_count: {self.day_count}",
@@ -182,6 +186,14 @@ class RunSummary:
             f"  categorization_manifests_rewritten: {self.categorization_manifests_rewritten}",
         ]
         return "\n".join(lines)
+
+
+@dataclass(frozen=True)
+class HeifConversionSummary:
+    """Summary of front-of-pipeline HEIF/HEIC to JPEG conversion."""
+
+    converted_files: int = 0
+    deleted_original_files: int = 0
 
 
 @dataclass(frozen=True)

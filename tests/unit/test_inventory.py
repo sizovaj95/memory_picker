@@ -12,6 +12,7 @@ def test_scan_trip_root_classifies_files_and_skips_managed_directories(tmp_path)
     root.mkdir()
 
     (root / "photo.JPG").write_bytes(b"jpg")
+    (root / "raw.HEIF").write_bytes(b"heif")
     (root / "clip.MOV").write_bytes(b"mov")
     (root / "sidecar.AAE").write_text("xml", encoding="utf-8")
     (root / "unknown.bin").write_bytes(b"bin")
@@ -25,6 +26,7 @@ def test_scan_trip_root_classifies_files_and_skips_managed_directories(tmp_path)
     assert classifications == {
         "clip.MOV": MediaClassification.NON_PHOTO,
         "photo.JPG": MediaClassification.PHOTO,
+        "raw.HEIF": MediaClassification.PHOTO,
         "sidecar.AAE": MediaClassification.NON_PHOTO,
         "unknown.bin": MediaClassification.UNSUPPORTED,
     }
