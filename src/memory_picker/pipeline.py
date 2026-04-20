@@ -16,6 +16,7 @@ from memory_picker.day_assignment import (
     resolve_photo_record,
 )
 from memory_picker.file_actions import apply_move_plans
+from memory_picker.heif_conversion import convert_trip_root_heif_files
 from memory_picker.inventory import scan_trip_root
 from memory_picker.logging_utils import log_progress
 from memory_picker.models import (
@@ -121,18 +122,20 @@ def _run_quality_assessments(
 def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunSummary:
     """Run intake, clustering, deterministic cleanup, and optional categorization."""
 
-    LOGGER.info("Stage 1/6: scanning trip root inventory")
+    conversion_summary = convert_trip_root_heif_files(settings)
+
+    LOGGER.info("Stage 1/7: scanning trip root inventory")
     inventory = scan_trip_root(settings)
     photo_items = [item for item in inventory if item.classification == MediaClassification.PHOTO]
     artifact_items = [item for item in inventory if item.classification != MediaClassification.PHOTO]
     LOGGER.info(
-        "Completed stage 1/6: total_items=%s photo_items=%s artifact_items=%s",
+        "Completed stage 1/7: total_items=%s photo_items=%s artifact_items=%s",
         len(inventory),
         len(photo_items),
         len(artifact_items),
     )
 
-    LOGGER.info("Stage 2/6: resolving timestamps and day assignments")
+    LOGGER.info("Stage 2/7: resolving timestamps and day assignments")
     photo_records = [resolve_photo_record(item) for item in photo_items]
     artifact_dates = {
         item.source_path: infer_filesystem_datetime(item.source_path).date() for item in artifact_items
@@ -146,17 +149,17 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         assignment.source_path: assignment for assignment in photo_assignments
     }
     LOGGER.info(
-        "Completed stage 2/6: photo_records=%s artifacts=%s day_count=%s",
+        "Completed stage 2/7: photo_records=%s artifacts=%s day_count=%s",
         len(photo_records),
         len(artifact_items),
         len(day_map),
     )
 
-    LOGGER.info("Stage 3/6: running quality checks for %s photos", len(photo_records))
+    LOGGER.info("Stage 3/7: running quality checks for %s photos", len(photo_records))
     assessments = _run_quality_assessments(photo_records, settings)
     assessments_by_path = {assessment.source_path: assessment for assessment in assessments}
 
-    LOGGER.info("Stage 4/6: moving files into day folders")
+    LOGGER.info("Stage 4/7: moving files into day folders")
     move_plans: list[FileMovePlan] = []
     for record in photo_records:
         assignment = photo_assignments_by_path[record.source_path]
@@ -181,28 +184,28 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
 
     file_summary = apply_move_plans(settings, move_plans)
     LOGGER.info(
-        "Completed stage 4/6: moved_files=%s created_directories=%s",
+        "Completed stage 4/7: moved_files=%s created_directories=%s",
         file_summary.total_moved,
         file_summary.created_directories,
     )
-    LOGGER.info("Stage 5/6: clustering accepted photos")
+    LOGGER.info("Stage 5/7: clustering accepted photos")
     clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
     LOGGER.info(
-        "Completed stage 5/6: clustered_days=%s final_clusters=%s",
+        "Completed stage 5/7: clustered_days=%s final_clusters=%s",
         clustering_summary.clustered_days,
         clustering_summary.cluster_count,
     )
-    LOGGER.info("Stage 6/6: post-cluster cleanup")
+    LOGGER.info("Stage 6/7: post-cluster cleanup")
     cleanup_summary = run_post_cluster_cleanup(settings)
     LOGGER.info(
-        "Completed stage 6/6: duplicate_rejections=%s renamed=%s",
+        "Completed stage 6/7: duplicate_rejections=%s renamed=%s",
         cleanup_summary.duplicate_photos_rejected,
         cleanup_summary.renamed_photos,
     )
-    LOGGER.info("Optional stage: cluster categorization")
+    LOGGER.info("Stage 7/7: optional cluster categorization")
     categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
     LOGGER.info(
-        "Completed optional categorization stage: categorized_days=%s classified_clusters=%s",
+        "Completed stage 7/7: categorized_days=%s classified_clusters=%s",
         categorization_summary.categorized_days,
         categorization_summary.classified_clusters,
     )
@@ -216,6 +219,8 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         unsupported_items=sum(
             1 for item in inventory if item.classification == MediaClassification.UNSUPPORTED
         ),
+        converted_heif_files=conversion_summary.converted_files,
+        deleted_original_heif_files=conversion_summary.deleted_original_files,
         accepted_photos=sum(1 for assessment in assessments if assessment.is_accepted),
         rejected_photos=sum(1 for assessment in assessments if not assessment.is_accepted),
         day_count=len(iter_day_directories(settings)),
@@ -235,13 +240,15 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
     )
 
     LOGGER.info(
-        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s days=%s moved=%s clustered_days=%s clusters=%s duplicate_rejections=%s renamed=%s classified_clusters=%s categorized_moves=%s",
+        "Run summary: total=%s photos=%s accepted=%s rejected=%s artifacts=%s unsupported=%s converted_heif=%s deleted_heif=%s days=%s moved=%s clustered_days=%s clusters=%s duplicate_rejections=%s renamed=%s classified_clusters=%s categorized_moves=%s",
         summary.total_items,
         summary.photo_items,
         summary.accepted_photos,
         summary.rejected_photos,
         summary.non_photo_items,
         summary.unsupported_items,
+        summary.converted_heif_files,
+        summary.deleted_original_heif_files,
         summary.day_count,
         summary.moved_files,
         summary.clustered_days,

@@ -11,7 +11,7 @@ from dotenv import find_dotenv, load_dotenv
 
 DAY_FOLDER_PATTERN = re.compile(r"^day\d{2}$")
 
-DEFAULT_SUPPORTED_PHOTO_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "heic"})
+DEFAULT_SUPPORTED_PHOTO_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "heic", "heif"})
 DEFAULT_NON_PHOTO_EXTENSIONS = frozenset(
     {
         "aae",
@@ -135,7 +135,7 @@ DEFAULT_CATEGORY_DEFINITIONS = (
 class CategorizationSettings:
     """Config for optional OpenAI-backed post-cleanup categorization."""
 
-    enabled: bool = True
+    enabled: bool = False
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     categories: tuple[CategoryDefinition, ...] = field(default_factory=lambda: DEFAULT_CATEGORY_DEFINITIONS)
@@ -177,6 +177,7 @@ class AppSettings:
     )
     day_prefix: str = "day"
     collision_suffix_separator: str = "__dup"
+    conversion_collision_suffix_separator: str = "__converted"
     max_photos_per_day: int | None = None
     max_photos_total: int | None = None
 

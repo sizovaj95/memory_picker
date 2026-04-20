@@ -46,6 +46,19 @@ def write_checkerboard_image(
     return path
 
 
+def write_disguised_heif_image(
+    path: Path,
+    capture_datetime: datetime | None = None,
+    size: tuple[int, int] = (128, 128),
+) -> Path:
+    """Create a JPEG-backed test image stored under a .heic or .heif extension."""
+
+    temp_path = path.with_name(f"{path.stem}__staged.jpg")
+    write_checkerboard_image(temp_path, capture_datetime=capture_datetime, size=size)
+    temp_path.replace(path)
+    return path
+
+
 def write_dark_image(path: Path, size: tuple[int, int] = (128, 128)) -> Path:
     """Create a dark image to trigger exposure rejection."""
 

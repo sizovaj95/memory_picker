@@ -10,6 +10,8 @@ def test_build_settings_loads_defaults(tmp_path):
 
     assert settings.root_path == tmp_path.resolve()
     assert "jpg" in settings.supported_photo_extensions
+    assert "heif" in settings.supported_photo_extensions
+    assert settings.conversion_collision_suffix_separator == "__converted"
     assert settings.managed_folders.rejected == "_rejected"
     assert settings.managed_folders.low_quality == "low_quality"
     assert settings.managed_folders.not_photo == "not_photo"
