@@ -9,6 +9,7 @@ QUIET_THIRD_PARTY_LOGGERS = (
     "httpx",
     "httpcore",
 )
+PROGRESS_LOG_INTERVAL = 20
 
 
 def configure_logging(level: int | str = logging.INFO) -> logging.Logger:
@@ -26,3 +27,20 @@ def configure_logging(level: int | str = logging.INFO) -> logging.Logger:
         third_party_logger = logging.getLogger(logger_name)
         third_party_logger.setLevel(logging.WARNING)
     return logger
+
+
+def log_progress(
+    logger: logging.Logger,
+    action: str,
+    index: int,
+    total: int,
+    *,
+    noun: str = "file",
+    interval: int = PROGRESS_LOG_INTERVAL,
+) -> None:
+    """Log periodic progress for long-running per-item work."""
+
+    if total <= 0:
+        return
+    if index == total or index % interval == 0:
+        logger.info("%s %s number %s/%s", action, noun, index, total)

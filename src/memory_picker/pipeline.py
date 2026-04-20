@@ -16,6 +16,7 @@ from memory_picker.day_assignment import (
 )
 from memory_picker.file_actions import apply_move_plans
 from memory_picker.inventory import scan_trip_root
+from memory_picker.logging_utils import log_progress
 from memory_picker.models import (
     DestinationCategory,
     FileMovePlan,
@@ -62,10 +63,12 @@ def _build_photo_move_plan(
 def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunSummary:
     """Run intake, clustering, deterministic cleanup, and optional categorization."""
 
+    LOGGER.info("Stage 1/6: scanning trip root inventory")
     inventory = scan_trip_root(settings)
     photo_items = [item for item in inventory if item.classification == MediaClassification.PHOTO]
     artifact_items = [item for item in inventory if item.classification != MediaClassification.PHOTO]
 
+    LOGGER.info("Stage 2/6: resolving timestamps and day assignments")
     photo_records = [resolve_photo_record(item) for item in photo_items]
     artifact_dates = {
         item.source_path: infer_filesystem_datetime(item.source_path).date() for item in artifact_items
@@ -79,9 +82,14 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         assignment.source_path: assignment for assignment in photo_assignments
     }
 
-    assessments = [assess_photo(record.source_path, settings.quality_thresholds) for record in photo_records]
+    LOGGER.info("Stage 3/6: running quality checks for %s photos", len(photo_records))
+    assessments: list[QualityAssessment] = []
+    for index, record in enumerate(photo_records, start=1):
+        assessments.append(assess_photo(record.source_path, settings.quality_thresholds))
+        log_progress(LOGGER, "Processing", index, len(photo_records), noun="photo")
     assessments_by_path = {assessment.source_path: assessment for assessment in assessments}
 
+    LOGGER.info("Stage 4/6: moving files into day folders")
     move_plans: list[FileMovePlan] = []
     for record in photo_records:
         assignment = photo_assignments_by_path[record.source_path]
@@ -105,8 +113,11 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         )
 
     file_summary = apply_move_plans(settings, move_plans)
+    LOGGER.info("Stage 5/6: clustering accepted photos")
     clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
+    LOGGER.info("Stage 6/6: post-cluster cleanup")
     cleanup_summary = run_post_cluster_cleanup(settings)
+    LOGGER.info("Optional stage: cluster categorization")
     categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
 
     summary = RunSummary(

@@ -9,10 +9,14 @@ from typing import Sequence
 
 import numpy as np
 from PIL import Image
+import logging
 
 from memory_picker.config import EmbeddingSettings
 from memory_picker.image_support import register_heif_support
+from memory_picker.logging_utils import log_progress
 from memory_picker.models import AcceptedPhotoRecord, ImageEmbedding
+
+LOGGER = logging.getLogger("memory_picker.embeddings")
 
 
 class ImageEmbedder(ABC):
@@ -43,8 +47,17 @@ class DinoV2ImageEmbedder(ImageEmbedder):
 
         self._torch = torch
         device = self.resolve_device(self.settings.device)
-        self._processor = AutoImageProcessor.from_pretrained(self.settings.model_name)
-        self._model = AutoModel.from_pretrained(self.settings.model_name)
+        from_pretrained_kwargs = {}
+        if self.settings.hf_token:
+            from_pretrained_kwargs["token"] = self.settings.hf_token
+        self._processor = AutoImageProcessor.from_pretrained(
+            self.settings.model_name,
+            **from_pretrained_kwargs,
+        )
+        self._model = AutoModel.from_pretrained(
+            self.settings.model_name,
+            **from_pretrained_kwargs,
+        )
         self._model.to(device)
         self._model.eval()
         self._device = device
@@ -70,6 +83,7 @@ class DinoV2ImageEmbedder(ImageEmbedder):
         if not photo_records:
             return []
 
+        LOGGER.info("Embedding %s accepted photos with %s", len(photo_records), self.settings.model_name)
         embeddings: list[ImageEmbedding] = []
         batch_size = max(1, self.settings.batch_size)
         for index in range(0, len(photo_records), batch_size):
@@ -90,5 +104,12 @@ class DinoV2ImageEmbedder(ImageEmbedder):
 
             for record, vector in zip(batch_records, vectors, strict=True):
                 embeddings.append(ImageEmbedding(source_path=record.source_path, vector=vector))
+            log_progress(
+                LOGGER,
+                "Embedding",
+                len(embeddings),
+                len(photo_records),
+                noun="photo",
+            )
 
         return embeddings
