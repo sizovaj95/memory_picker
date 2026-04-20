@@ -59,6 +59,7 @@ class EmbeddingSettings:
     model_name: str = "facebook/dinov2-base"
     device: str = "auto"
     batch_size: int = 8
+    hf_token: str | None = None
 
 
 @dataclass(frozen=True)
@@ -179,6 +180,9 @@ def build_settings(root_path: str | Path) -> AppSettings:
 
     return AppSettings(
         root_path=resolved_root_path,
+        embedding_settings=EmbeddingSettings(
+            hf_token=os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN"),
+        ),
         categorization_settings=CategorizationSettings(
             openai_api_key=os.environ.get("OPENAI_API_KEY"),
         ),

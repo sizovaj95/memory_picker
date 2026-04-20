@@ -41,3 +41,19 @@ def test_build_settings_loads_openai_key_from_dotenv(tmp_path, monkeypatch):
     settings = build_settings(trip_root)
 
     assert settings.categorization_settings.openai_api_key == "from-dotenv"
+
+
+def test_build_settings_loads_hf_token_from_dotenv(tmp_path, monkeypatch):
+    trip_root = tmp_path / "trip"
+    trip_root.mkdir()
+    dotenv_root = tmp_path / "workspace"
+    dotenv_root.mkdir()
+    (dotenv_root / ".env").write_text("HF_TOKEN=hf-from-dotenv\n", encoding="utf-8")
+
+    monkeypatch.chdir(dotenv_root)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_HUB_TOKEN", raising=False)
+
+    settings = build_settings(trip_root)
+
+    assert settings.embedding_settings.hf_token == "hf-from-dotenv"

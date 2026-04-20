@@ -13,6 +13,7 @@ from PIL import Image, ImageOps
 
 from memory_picker.config import AppSettings, CategoryDefinition, CategorizationSettings
 from memory_picker.image_support import register_heif_support
+from memory_picker.logging_utils import log_progress
 from memory_picker.models import (
     CategorizationRunSummary,
     ClusterCategorizationResult,
@@ -186,12 +187,13 @@ def _categorize_day(
 ) -> CategorizationRunSummary:
     payload = load_cluster_manifest(day_path)
     cluster_results: dict[str, tuple[ClusterCategorizationResult, str]] = {}
+    cluster_candidates = [
+        cluster for cluster in payload["clusters"] if _accepted_cluster_members(cluster, settings)
+    ]
+    LOGGER.info("Categorizing %s clusters for %s", len(cluster_candidates), day_path.name)
 
-    for cluster in payload["clusters"]:
+    for index, cluster in enumerate(cluster_candidates, start=1):
         accepted_members = _accepted_cluster_members(cluster, settings)
-        if not accepted_members:
-            continue
-
         source_member = _choose_classification_member(cluster, accepted_members)
         image_path = (settings.root_path / source_member["relative_path"]).resolve()
         result = categorizer.categorize_cluster(
@@ -201,6 +203,7 @@ def _categorize_day(
             categorization_settings=settings.categorization_settings,
         )
         cluster_results[cluster["cluster_id"]] = (result, source_member["filename"])
+        log_progress(LOGGER, "Categorizing", index, len(cluster_candidates), noun="cluster")
 
     photos_moved = _move_cluster_members_to_category_folders(day_path, payload, cluster_results, settings)
     rewritten_payload = _rewrite_categorized_manifest_payload(

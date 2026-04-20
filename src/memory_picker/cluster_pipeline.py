@@ -30,6 +30,7 @@ def run_clustering_pipeline(
     if not day_directories:
         return ClusteringRunSummary()
 
+    LOGGER.info("Preparing accepted-photo records for %s day folders", len(day_directories))
     photo_records_by_day = {
         day_path.name: load_day_photo_records(day_path, settings) for day_path in day_directories
     }
@@ -48,6 +49,7 @@ def run_clustering_pipeline(
         if not photo_records:
             continue
 
+        LOGGER.info("Clustering %s with %s accepted photos", day_path.name, len(photo_records))
         accepted_photo_count += len(photo_records)
         embeddings = active_embedder.embed_images(photo_records)
         embeddings_by_path = {embedding.source_path: embedding.vector for embedding in embeddings}
