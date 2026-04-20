@@ -60,3 +60,4 @@
 2026-04-13 - E04/F03/S01-S02: Added per-day category materialization that moves accepted photos into category folders while preserving Epic 3 filenames and leaving rejected/non-photo files untouched.
 2026-04-13 - E04/F04/S01-S03: Rewrote cluster manifests with category metadata, made accepted-photo loading recursive for rerun safety after categorization, integrated Epic 4 into the pipeline, and added automated tests for the optional categorization path.
 2026-04-16 - E01/F05 + E03/F02: Reshaped day-level rejection storage into `_rejected/low_quality`, `_rejected/not_photo`, and `_rejected/duplicates`, renamed the reserved root folder to `_rejected`, and refreshed tests/docs for the new layout.
+2026-04-20 - E01/F06 + E04/F02: Added configurable threaded quality checks, async OpenAI categorization with bounded concurrency and retries, richer stage/progress logging, and tests covering stable ordering plus failed/retired categorization behavior.

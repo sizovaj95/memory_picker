@@ -16,6 +16,11 @@ def test_build_settings_loads_defaults(tmp_path):
     assert settings.managed_folders.duplicates == "duplicates"
     assert settings.quality_thresholds.blur_threshold > 0
     assert settings.cleanup_settings.duplicate_similarity_threshold == 0.99
+    assert settings.quality_concurrency_settings.enabled is True
+    assert settings.quality_concurrency_settings.max_workers == 8
+    assert settings.categorization_concurrency_settings.enabled is True
+    assert settings.categorization_concurrency_settings.max_concurrent_requests == 4
+    assert settings.categorization_concurrency_settings.max_retries == 3
     assert settings.categorization_settings.enabled is False
     assert [category.name for category in settings.categorization_settings.categories] == [
         "people",

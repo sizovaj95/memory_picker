@@ -47,6 +47,13 @@ class DinoV2ImageEmbedder(ImageEmbedder):
 
         self._torch = torch
         device = self.resolve_device(self.settings.device)
+        cuda_available = self._torch.cuda.is_available()
+        LOGGER.info(
+            "Embedding device resolved to %s (cuda enabled: %s, requested: %s)",
+            device,
+            "yes" if cuda_available else "no",
+            self.settings.device,
+        )
         from_pretrained_kwargs = {}
         if self.settings.hf_token:
             from_pretrained_kwargs["token"] = self.settings.hf_token
