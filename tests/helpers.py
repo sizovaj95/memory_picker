@@ -162,3 +162,12 @@ class MockClusterCategorizer:
             model_name="mock-categorizer",
             response_id=f"mock-{cluster_id}",
         )
+
+    async def acategorize_cluster(
+        self,
+        day_name,
+        cluster,
+        image_path,
+        categorization_settings,
+    ) -> ClusterCategorizationResult:
+        return self.categorize_cluster(day_name, cluster, image_path, categorization_settings)

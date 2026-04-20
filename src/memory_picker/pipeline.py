@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 
 from memory_picker.categorization import run_cluster_categorization
@@ -60,6 +61,63 @@ def _build_photo_move_plan(
     )
 
 
+def _run_quality_assessments(
+    photo_records: list[PhotoRecord],
+    settings: AppSettings,
+) -> list[QualityAssessment]:
+    """Run local quality checks, optionally using a bounded thread pool."""
+
+    if not photo_records:
+        return []
+
+    total_photos = len(photo_records)
+    concurrency_settings = settings.quality_concurrency_settings
+    if not concurrency_settings.enabled or total_photos == 1:
+        LOGGER.info("Running serial quality checks for %s photos", total_photos)
+        assessments: list[QualityAssessment] = []
+        for index, record in enumerate(photo_records, start=1):
+            assessments.append(assess_photo(record.source_path, settings.quality_thresholds))
+            log_progress(
+                LOGGER,
+                "Processing",
+                index,
+                total_photos,
+                noun="photo",
+                interval=concurrency_settings.progress_log_interval,
+            )
+        LOGGER.info("Completed quality checks: photos=%s workers=%s", total_photos, 1)
+        return assessments
+
+    max_workers = max(1, min(concurrency_settings.max_workers, total_photos))
+    LOGGER.info(
+        "Running concurrent quality checks for %s photos with %s workers",
+        total_photos,
+        max_workers,
+    )
+    assessments_by_index: dict[int, QualityAssessment] = {}
+    completed_count = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_index = {
+            executor.submit(assess_photo, record.source_path, settings.quality_thresholds): index
+            for index, record in enumerate(photo_records)
+        }
+        for future in as_completed(future_to_index):
+            index = future_to_index[future]
+            assessments_by_index[index] = future.result()
+            completed_count += 1
+            log_progress(
+                LOGGER,
+                "Processing",
+                completed_count,
+                total_photos,
+                noun="photo",
+                interval=concurrency_settings.progress_log_interval,
+            )
+
+    LOGGER.info("Completed quality checks: photos=%s workers=%s", total_photos, max_workers)
+    return [assessments_by_index[index] for index in range(total_photos)]
+
+
 def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunSummary:
     """Run intake, clustering, deterministic cleanup, and optional categorization."""
 
@@ -67,6 +125,12 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
     inventory = scan_trip_root(settings)
     photo_items = [item for item in inventory if item.classification == MediaClassification.PHOTO]
     artifact_items = [item for item in inventory if item.classification != MediaClassification.PHOTO]
+    LOGGER.info(
+        "Completed stage 1/6: total_items=%s photo_items=%s artifact_items=%s",
+        len(inventory),
+        len(photo_items),
+        len(artifact_items),
+    )
 
     LOGGER.info("Stage 2/6: resolving timestamps and day assignments")
     photo_records = [resolve_photo_record(item) for item in photo_items]
@@ -81,12 +145,15 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
     photo_assignments_by_path = {
         assignment.source_path: assignment for assignment in photo_assignments
     }
+    LOGGER.info(
+        "Completed stage 2/6: photo_records=%s artifacts=%s day_count=%s",
+        len(photo_records),
+        len(artifact_items),
+        len(day_map),
+    )
 
     LOGGER.info("Stage 3/6: running quality checks for %s photos", len(photo_records))
-    assessments: list[QualityAssessment] = []
-    for index, record in enumerate(photo_records, start=1):
-        assessments.append(assess_photo(record.source_path, settings.quality_thresholds))
-        log_progress(LOGGER, "Processing", index, len(photo_records), noun="photo")
+    assessments = _run_quality_assessments(photo_records, settings)
     assessments_by_path = {assessment.source_path: assessment for assessment in assessments}
 
     LOGGER.info("Stage 4/6: moving files into day folders")
@@ -113,12 +180,32 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         )
 
     file_summary = apply_move_plans(settings, move_plans)
+    LOGGER.info(
+        "Completed stage 4/6: moved_files=%s created_directories=%s",
+        file_summary.total_moved,
+        file_summary.created_directories,
+    )
     LOGGER.info("Stage 5/6: clustering accepted photos")
     clustering_summary = run_clustering_pipeline(settings, embedder=embedder)
+    LOGGER.info(
+        "Completed stage 5/6: clustered_days=%s final_clusters=%s",
+        clustering_summary.clustered_days,
+        clustering_summary.cluster_count,
+    )
     LOGGER.info("Stage 6/6: post-cluster cleanup")
     cleanup_summary = run_post_cluster_cleanup(settings)
+    LOGGER.info(
+        "Completed stage 6/6: duplicate_rejections=%s renamed=%s",
+        cleanup_summary.duplicate_photos_rejected,
+        cleanup_summary.renamed_photos,
+    )
     LOGGER.info("Optional stage: cluster categorization")
     categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
+    LOGGER.info(
+        "Completed optional categorization stage: categorized_days=%s classified_clusters=%s",
+        categorization_summary.categorized_days,
+        categorization_summary.classified_clusters,
+    )
 
     summary = RunSummary(
         total_items=len(inventory),

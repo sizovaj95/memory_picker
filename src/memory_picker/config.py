@@ -82,6 +82,15 @@ class CleanupSettings:
 
 
 @dataclass(frozen=True)
+class QualityConcurrencySettings:
+    """Config for parallel local quality assessment."""
+
+    enabled: bool = True
+    max_workers: int = 8
+    progress_log_interval: int = 20
+
+
+@dataclass(frozen=True)
 class CategoryDefinition:
     """One configurable AI categorization label plus its guidance."""
 
@@ -126,12 +135,23 @@ DEFAULT_CATEGORY_DEFINITIONS = (
 class CategorizationSettings:
     """Config for optional OpenAI-backed post-cleanup categorization."""
 
-    enabled: bool = False
+    enabled: bool = True
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     categories: tuple[CategoryDefinition, ...] = field(default_factory=lambda: DEFAULT_CATEGORY_DEFINITIONS)
     openai_upload_max_dimension: int = 1024
     openai_upload_jpeg_quality: int = 82
+
+
+@dataclass(frozen=True)
+class CategorizationConcurrencySettings:
+    """Config for concurrent OpenAI cluster categorization."""
+
+    enabled: bool = True
+    max_concurrent_requests: int = 4
+    max_retries: int = 3
+    initial_retry_delay_seconds: float = 1.0
+    progress_log_interval: int = 20
 
 
 @dataclass(frozen=True)
@@ -150,7 +170,11 @@ class AppSettings:
     embedding_settings: EmbeddingSettings = field(default_factory=EmbeddingSettings)
     clustering_thresholds: ClusteringThresholds = field(default_factory=ClusteringThresholds)
     cleanup_settings: CleanupSettings = field(default_factory=CleanupSettings)
+    quality_concurrency_settings: QualityConcurrencySettings = field(default_factory=QualityConcurrencySettings)
     categorization_settings: CategorizationSettings = field(default_factory=CategorizationSettings)
+    categorization_concurrency_settings: CategorizationConcurrencySettings = field(
+        default_factory=CategorizationConcurrencySettings
+    )
     day_prefix: str = "day"
     collision_suffix_separator: str = "__dup"
     max_photos_per_day: int | None = None

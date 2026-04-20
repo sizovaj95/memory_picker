@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import io
 import json
@@ -22,9 +23,13 @@ from memory_picker.post_cluster_cleanup import load_cluster_manifest
 from memory_picker.preprocessing import iter_day_directories
 
 try:
-    from openai import OpenAI
+    from openai import APIConnectionError, APITimeoutError, AsyncOpenAI, InternalServerError, RateLimitError
 except ImportError:  # pragma: no cover - exercised only when the optional dependency is missing.
-    OpenAI = None
+    APIConnectionError = None
+    APITimeoutError = None
+    AsyncOpenAI = None
+    InternalServerError = None
+    RateLimitError = None
 
 LOGGER = logging.getLogger("memory_picker.categorization")
 
@@ -32,7 +37,7 @@ LOGGER = logging.getLogger("memory_picker.categorization")
 class ClusterCategorizer(Protocol):
     """Interface for classifying one representative image per cluster."""
 
-    def categorize_cluster(
+    async def acategorize_cluster(
         self,
         day_name: str,
         cluster: dict,
@@ -93,14 +98,14 @@ class OpenAIClusterCategorizer:
     """OpenAI-backed categorizer for one representative image per cluster."""
 
     def __init__(self, api_key: str, model_name: str) -> None:
-        if OpenAI is None:
+        if AsyncOpenAI is None:
             raise RuntimeError(
                 "The openai package is not installed. Add it to the environment before running Epic 4."
             )
-        self._client = OpenAI(api_key=api_key)
+        self._client = AsyncOpenAI(api_key=api_key)
         self._model_name = model_name
 
-    def categorize_cluster(
+    async def acategorize_cluster(
         self,
         day_name: str,
         cluster: dict,
@@ -112,7 +117,7 @@ class OpenAIClusterCategorizer:
             max_dimension=categorization_settings.openai_upload_max_dimension,
             jpeg_quality=categorization_settings.openai_upload_jpeg_quality,
         )
-        response = self._client.responses.create(
+        response = await self._client.responses.create(
             model=self._model_name,
             input=[
                 {
@@ -168,6 +173,11 @@ def run_cluster_categorization(
         return CategorizationRunSummary()
 
     active_categorizer = categorizer or build_default_categorizer(settings)
+    LOGGER.info(
+        "Epic 4 categorization is enabled: concurrency_limit=%s max_retries=%s",
+        settings.categorization_concurrency_settings.max_concurrent_requests,
+        settings.categorization_concurrency_settings.max_retries,
+    )
     summary = CategorizationRunSummary()
     for day_path in day_paths:
         day_summary = _categorize_day(day_path, settings, active_categorizer)
@@ -186,24 +196,24 @@ def _categorize_day(
     categorizer: ClusterCategorizer,
 ) -> CategorizationRunSummary:
     payload = load_cluster_manifest(day_path)
-    cluster_results: dict[str, tuple[ClusterCategorizationResult, str]] = {}
     cluster_candidates = [
-        cluster for cluster in payload["clusters"] if _accepted_cluster_members(cluster, settings)
+        (cluster, _choose_classification_member(cluster, accepted_members))
+        for cluster in payload["clusters"]
+        if (accepted_members := _accepted_cluster_members(cluster, settings))
     ]
     LOGGER.info("Categorizing %s clusters for %s", len(cluster_candidates), day_path.name)
-
-    for index, cluster in enumerate(cluster_candidates, start=1):
-        accepted_members = _accepted_cluster_members(cluster, settings)
-        source_member = _choose_classification_member(cluster, accepted_members)
-        image_path = (settings.root_path / source_member["relative_path"]).resolve()
-        result = categorizer.categorize_cluster(
-            day_name=day_path.name,
-            cluster=cluster,
-            image_path=image_path,
-            categorization_settings=settings.categorization_settings,
+    try:
+        cluster_results, retry_count = asyncio.run(
+            _collect_cluster_results_async(
+                day_path=day_path,
+                cluster_candidates=cluster_candidates,
+                settings=settings,
+                categorizer=categorizer,
+            )
         )
-        cluster_results[cluster["cluster_id"]] = (result, source_member["filename"])
-        log_progress(LOGGER, "Categorizing", index, len(cluster_candidates), noun="cluster")
+    except Exception as exc:
+        LOGGER.error("Categorization failed for %s: %s", day_path.name, exc)
+        raise
 
     photos_moved = _move_cluster_members_to_category_folders(day_path, payload, cluster_results, settings)
     rewritten_payload = _rewrite_categorized_manifest_payload(
@@ -216,10 +226,12 @@ def _categorize_day(
     manifest_path.write_text(json.dumps(rewritten_payload, indent=2), encoding="utf-8")
 
     LOGGER.info(
-        "Categorized %s: clusters=%s photos_moved=%s",
+        "Categorized %s: clusters=%s photos_moved=%s retries=%s concurrency_limit=%s",
         day_path.name,
         len(cluster_results),
         photos_moved,
+        retry_count,
+        _categorization_request_limit(settings),
     )
     return CategorizationRunSummary(
         categorized_days=1,
@@ -227,6 +239,137 @@ def _categorize_day(
         photos_moved=photos_moved,
         manifests_rewritten=1,
     )
+
+
+async def _collect_cluster_results_async(
+    day_path: Path,
+    cluster_candidates: list[tuple[dict, dict]],
+    settings: AppSettings,
+    categorizer: ClusterCategorizer,
+) -> tuple[dict[str, tuple[ClusterCategorizationResult, str]], int]:
+    """Collect cluster categorization results concurrently before mutating the filesystem."""
+
+    concurrency_limit = _categorization_request_limit(settings)
+    semaphore = asyncio.Semaphore(concurrency_limit)
+    tasks = [
+        asyncio.create_task(
+            _categorize_cluster_candidate_async(
+                day_name=day_path.name,
+                cluster=cluster,
+                source_member=source_member,
+                settings=settings,
+                categorizer=categorizer,
+                semaphore=semaphore,
+            )
+        )
+        for cluster, source_member in cluster_candidates
+    ]
+    cluster_results: dict[str, tuple[ClusterCategorizationResult, str]] = {}
+    retry_count = 0
+    completed_count = 0
+    try:
+        for task in asyncio.as_completed(tasks):
+            cluster_id, result, source_filename, retries_used = await task
+            cluster_results[cluster_id] = (result, source_filename)
+            retry_count += retries_used
+            completed_count += 1
+            log_progress(
+                LOGGER,
+                "Categorizing",
+                completed_count,
+                len(cluster_candidates),
+                noun="cluster",
+                interval=settings.categorization_concurrency_settings.progress_log_interval,
+            )
+    except Exception:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
+    return cluster_results, retry_count
+
+
+async def _categorize_cluster_candidate_async(
+    day_name: str,
+    cluster: dict,
+    source_member: dict,
+    settings: AppSettings,
+    categorizer: ClusterCategorizer,
+    semaphore: asyncio.Semaphore,
+) -> tuple[str, ClusterCategorizationResult, str, int]:
+    """Categorize one cluster representative with retry and bounded concurrency."""
+
+    async with semaphore:
+        image_path = (settings.root_path / source_member["relative_path"]).resolve()
+        result, retries_used = await _categorize_cluster_with_retries(
+            categorizer=categorizer,
+            day_name=day_name,
+            cluster=cluster,
+            image_path=image_path,
+            settings=settings,
+        )
+    return cluster["cluster_id"], result, source_member["filename"], retries_used
+
+
+async def _categorize_cluster_with_retries(
+    categorizer: ClusterCategorizer,
+    day_name: str,
+    cluster: dict,
+    image_path: Path,
+    settings: AppSettings,
+) -> tuple[ClusterCategorizationResult, int]:
+    """Categorize one cluster representative, retrying only transient OpenAI failures."""
+
+    retries_used = 0
+    concurrency_settings = settings.categorization_concurrency_settings
+    for attempt in range(concurrency_settings.max_retries + 1):
+        try:
+            result = await categorizer.acategorize_cluster(
+                day_name=day_name,
+                cluster=cluster,
+                image_path=image_path,
+                categorization_settings=settings.categorization_settings,
+            )
+            return result, retries_used
+        except Exception as exc:
+            if attempt >= concurrency_settings.max_retries or not _is_retryable_categorization_error(exc):
+                raise
+            retries_used += 1
+            delay_seconds = concurrency_settings.initial_retry_delay_seconds * (2**attempt)
+            LOGGER.warning(
+                "Retrying cluster categorization for %s in %s after %s: %s",
+                cluster["cluster_id"],
+                day_name,
+                f"{delay_seconds:.2f}s",
+                exc,
+            )
+            await asyncio.sleep(delay_seconds)
+    raise RuntimeError(f"Unreachable categorization retry state for {cluster['cluster_id']}")
+
+
+def _categorization_request_limit(settings: AppSettings) -> int:
+    """Return the effective concurrent request limit for OpenAI categorization."""
+
+    concurrency_settings = settings.categorization_concurrency_settings
+    if not concurrency_settings.enabled:
+        return 1
+    return max(1, concurrency_settings.max_concurrent_requests)
+
+
+def _is_retryable_categorization_error(exc: Exception) -> bool:
+    """Return True for transient OpenAI request failures that are safe to retry."""
+
+    retryable_types = tuple(
+        exception_type
+        for exception_type in (
+            APIConnectionError,
+            APITimeoutError,
+            InternalServerError,
+            RateLimitError,
+        )
+        if exception_type is not None
+    )
+    return isinstance(exc, retryable_types)
 
 
 def _accepted_cluster_members(cluster: dict, settings: AppSettings) -> list[dict]:
