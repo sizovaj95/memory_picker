@@ -8,6 +8,7 @@ import io
 import json
 import logging
 from pathlib import Path
+from time import perf_counter
 from typing import Protocol
 
 from PIL import Image, ImageOps
@@ -160,8 +161,9 @@ def run_cluster_categorization(
 ) -> CategorizationRunSummary:
     """Classify cleaned clusters and move accepted photos into per-day category folders."""
 
+    stage_started_at = perf_counter()
     if not settings.categorization_settings.enabled:
-        LOGGER.info("Epic 4 categorization is disabled in settings.")
+        LOGGER.info("Epic 4 categorization is disabled in settings. elapsed_seconds=%.2f", 0.0)
         return CategorizationRunSummary()
 
     day_paths = [
@@ -170,6 +172,7 @@ def run_cluster_categorization(
         if (day_path / "cluster_manifest.json").exists()
     ]
     if not day_paths:
+        LOGGER.info("Epic 4 categorization found no day manifests to process. elapsed_seconds=%.2f", 0.0)
         return CategorizationRunSummary()
 
     active_categorizer = categorizer or build_default_categorizer(settings)
@@ -187,6 +190,14 @@ def run_cluster_categorization(
             photos_moved=summary.photos_moved + day_summary.photos_moved,
             manifests_rewritten=summary.manifests_rewritten + day_summary.manifests_rewritten,
         )
+    LOGGER.info(
+        "Completed Epic 4 categorization: categorized_days=%s classified_clusters=%s photos_moved=%s manifests_rewritten=%s elapsed_seconds=%.2f",
+        summary.categorized_days,
+        summary.classified_clusters,
+        summary.photos_moved,
+        summary.manifests_rewritten,
+        perf_counter() - stage_started_at,
+    )
     return summary
 
 

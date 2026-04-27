@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+from time import perf_counter
 
 from memory_picker.categorization import run_cluster_categorization
 from memory_picker.cluster_pipeline import run_clustering_pipeline
@@ -156,8 +157,17 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
     )
 
     LOGGER.info("Stage 3/7: running quality checks for %s photos", len(photo_records))
+    quality_started_at = perf_counter()
     assessments = _run_quality_assessments(photo_records, settings)
+    quality_elapsed_seconds = perf_counter() - quality_started_at
     assessments_by_path = {assessment.source_path: assessment for assessment in assessments}
+    LOGGER.info(
+        "Completed stage 3/7: photos=%s accepted=%s rejected=%s elapsed_seconds=%.2f",
+        len(photo_records),
+        sum(1 for assessment in assessments if assessment.is_accepted),
+        sum(1 for assessment in assessments if not assessment.is_accepted),
+        quality_elapsed_seconds,
+    )
 
     LOGGER.info("Stage 4/7: moving files into day folders")
     move_plans: list[FileMovePlan] = []
@@ -203,11 +213,14 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         cleanup_summary.renamed_photos,
     )
     LOGGER.info("Stage 7/7: optional cluster categorization")
+    categorization_started_at = perf_counter()
     categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
+    categorization_elapsed_seconds = perf_counter() - categorization_started_at
     LOGGER.info(
-        "Completed stage 7/7: categorized_days=%s classified_clusters=%s",
+        "Completed stage 7/7: categorized_days=%s classified_clusters=%s elapsed_seconds=%.2f",
         categorization_summary.categorized_days,
         categorization_summary.classified_clusters,
+        categorization_elapsed_seconds,
     )
 
     summary = RunSummary(
