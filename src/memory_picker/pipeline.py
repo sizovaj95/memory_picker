@@ -212,7 +212,7 @@ def run_pipeline(settings: AppSettings, embedder=None, categorizer=None) -> RunS
         cleanup_summary.duplicate_photos_rejected,
         cleanup_summary.renamed_photos,
     )
-    LOGGER.info("Stage 7/7: optional cluster categorization")
+    LOGGER.info("Stage 7/7: optional burst-group categorization")
     categorization_started_at = perf_counter()
     categorization_summary = run_cluster_categorization(settings, categorizer=categorizer)
     categorization_elapsed_seconds = perf_counter() - categorization_started_at

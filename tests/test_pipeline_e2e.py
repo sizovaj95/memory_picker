@@ -131,14 +131,14 @@ def test_run_pipeline_optionally_categorizes_clusters_and_is_safe_on_rerun(tmp_p
     assert summary.categorized_days == 2
     assert summary.categorized_photos_moved == 2
     assert categorizer.calls == [
-        ("day01", "cluster001", "c001_b001_001.jpg"),
-        ("day02", "cluster001", "c001_b001_001.png"),
+        ("day01", "cluster001", "burst001", "c001_b001_001.jpg"),
+        ("day02", "cluster001", "burst001", "c001_b001_001.png"),
     ]
     assert (root / "day01" / "architecture" / "c001_b001_001.jpg").exists()
     assert (root / "day02" / "architecture" / "c001_b001_001.png").exists()
 
     day_one_manifest = json.loads((root / "day01" / "cluster_manifest.json").read_text(encoding="utf-8"))
-    assert day_one_manifest["clusters"][0]["category_name"] == "architecture"
+    assert day_one_manifest["clusters"][0]["burst_group_categories"][0]["category_name"] == "architecture"
     assert (
         day_one_manifest["clusters"][0]["members"][0]["relative_path"]
         == "day01/architecture/c001_b001_001.jpg"

@@ -107,7 +107,14 @@ DEFAULT_CATEGORY_DEFINITIONS = (
             "another subject clearly dominates."
         ),
     ),
-    CategoryDefinition(name="animals", rule="Use when an animal is the intended subject."),
+    CategoryDefinition(
+        name="animals",
+        rule=(
+            "Use when an animal is the intended subject and no full person is visible. "
+            "If only parts of people are visible, such as an arm or leg, and the rest "
+            "of the photo is animal-focused, still use animals."
+        ),
+    ),
     CategoryDefinition(name="food", rule="Use when food is the intended subject."),
     CategoryDefinition(
         name="nature",
@@ -135,7 +142,7 @@ DEFAULT_CATEGORY_DEFINITIONS = (
 class CategorizationSettings:
     """Config for optional OpenAI-backed post-cleanup categorization."""
 
-    enabled: bool = False
+    enabled: bool = True
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     categories: tuple[CategoryDefinition, ...] = field(default_factory=lambda: DEFAULT_CATEGORY_DEFINITIONS)
@@ -145,7 +152,7 @@ class CategorizationSettings:
 
 @dataclass(frozen=True)
 class CategorizationConcurrencySettings:
-    """Config for concurrent OpenAI cluster categorization."""
+    """Config for concurrent OpenAI categorization."""
 
     enabled: bool = True
     max_concurrent_requests: int = 4

@@ -10,7 +10,7 @@ It started as an attempt to automate travel-album curation, but the current focu
 - detect near-duplicates inside the same cluster and burst group
 - keep the best deterministic survivor
 - rename survivors into stable, sortable filenames
-- optionally categorize clusters with an OpenAI vision model
+- optionally categorize burst groups with an OpenAI vision model
 
 ## What The Pipeline Does
 
@@ -28,7 +28,7 @@ Given a flat folder of trip media, the pipeline currently works like this:
 10. Detect near-duplicates only within the same cluster and same burst group.
 11. Keep the best deterministic winner and move duplicate losers into `dayXX/_rejected/duplicates`.
 12. Rename survivors to names like `c001_b001_001.jpg`.
-13. Optionally send one representative image per cluster to OpenAI for categorization.
+13. Optionally send one representative image per accepted burst group to OpenAI for categorization.
 14. If categorization is enabled, move accepted photos into per-day category folders such as `day01/people` or `day02/architecture`.
 
 The project is designed to avoid destructive deletion. Files are moved into explicit folders instead of being removed.
@@ -68,7 +68,7 @@ If AI categorization is disabled, accepted photos stay directly in the `dayXX` r
 - `Pillow` and `pillow-heif` for image IO
 - `numpy` for image metrics and similarity calculations
 - `torch` and `transformers` for local DINOv2 embeddings
-- `openai` for optional Epic 4 cluster categorization
+- `openai` for optional Epic 4 burst-group categorization
 - `python-dotenv` for reading `.env`
 
 ## Running The Project
@@ -152,6 +152,6 @@ The implemented epics today are:
 - Epic 1: intake, quality filtering, day assignment, and file moves
 - Epic 2: preprocessing, burst grouping, embeddings, clustering, and manifests
 - Epic 3: deterministic duplicate rejection, survivor renaming, and manifest refresh
-- Epic 4: optional OpenAI-based cluster categorization
+- Epic 4: optional OpenAI-based burst-group categorization
 
 The project is still evolving, but it already works as a useful local photo-cleanup pipeline.

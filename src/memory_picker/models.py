@@ -288,7 +288,7 @@ class CleanupRunSummary:
 
 @dataclass(frozen=True)
 class ClusterCategorizationResult:
-    """Classification result for one cluster representative image."""
+    """Classification result for one representative image."""
 
     category_name: str
     rationale: str

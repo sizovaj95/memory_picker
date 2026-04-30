@@ -152,35 +152,60 @@ class FilenameMockEmbedder:
 
 
 class MockClusterCategorizer:
-    """Mock Epic 4 categorizer returning deterministic cluster categories."""
+    """Mock Epic 4 categorizer returning deterministic burst categories."""
 
     def __init__(
         self,
         categories_by_cluster_id: dict[str, str],
+        categories_by_burst_group: dict[tuple[str, str], str] | None = None,
         rationales_by_cluster_id: dict[str, str] | None = None,
+        rationales_by_burst_group: dict[tuple[str, str], str] | None = None,
     ) -> None:
         self.categories_by_cluster_id = categories_by_cluster_id
+        self.categories_by_burst_group = categories_by_burst_group or {}
         self.rationales_by_cluster_id = rationales_by_cluster_id or {}
-        self.calls: list[tuple[str, str, str]] = []
+        self.rationales_by_burst_group = rationales_by_burst_group or {}
+        self.calls: list[tuple[str, str, str, str]] = []
 
-    def categorize_cluster(self, day_name, cluster, image_path, categorization_settings) -> ClusterCategorizationResult:
-        self.calls.append((day_name, cluster["cluster_id"], image_path.name))
+    def categorize_cluster(
+        self,
+        day_name,
+        cluster,
+        burst_group_id,
+        image_path,
+        categorization_settings,
+    ) -> ClusterCategorizationResult:
+        self.calls.append((day_name, cluster["cluster_id"], burst_group_id, image_path.name))
         cluster_id = cluster["cluster_id"]
+        category_name = self.categories_by_burst_group.get(
+            (cluster_id, burst_group_id),
+            self.categories_by_cluster_id[cluster_id],
+        )
         return ClusterCategorizationResult(
-            category_name=self.categories_by_cluster_id[cluster_id],
-            rationale=self.rationales_by_cluster_id.get(
-                cluster_id,
-                f"Mock rationale for {cluster_id}",
+            category_name=category_name,
+            rationale=self.rationales_by_burst_group.get(
+                (cluster_id, burst_group_id),
+                self.rationales_by_cluster_id.get(
+                    cluster_id,
+                    f"Mock rationale for {cluster_id}/{burst_group_id}",
+                ),
             ),
             model_name="mock-categorizer",
-            response_id=f"mock-{cluster_id}",
+            response_id=f"mock-{cluster_id}-{burst_group_id}",
         )
 
     async def acategorize_cluster(
         self,
         day_name,
         cluster,
+        burst_group_id,
         image_path,
         categorization_settings,
     ) -> ClusterCategorizationResult:
-        return self.categorize_cluster(day_name, cluster, image_path, categorization_settings)
+        return self.categorize_cluster(
+            day_name,
+            cluster,
+            burst_group_id,
+            image_path,
+            categorization_settings,
+        )
