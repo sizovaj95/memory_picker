@@ -1,4 +1,4 @@
-"""Epic 4 optional OpenAI-backed cluster categorization."""
+"""Epic 4 optional OpenAI-backed burst-group categorization."""
 
 from __future__ import annotations
 
@@ -36,20 +36,21 @@ LOGGER = logging.getLogger("memory_picker.categorization")
 
 
 class ClusterCategorizer(Protocol):
-    """Interface for classifying one representative image per cluster."""
+    """Interface for classifying one burst representative image."""
 
     async def acategorize_cluster(
         self,
         day_name: str,
         cluster: dict,
+        burst_group_id: str,
         image_path: Path,
         categorization_settings: CategorizationSettings,
     ) -> ClusterCategorizationResult:
-        """Return one category assignment for the provided cluster representative."""
+        """Return one category assignment for the provided burst representative."""
 
 
 def build_default_categorizer(settings: AppSettings) -> ClusterCategorizer:
-    """Build the default OpenAI-backed cluster categorizer."""
+    """Build the default OpenAI-backed categorizer."""
 
     api_key = settings.categorization_settings.openai_api_key
     if not api_key:
@@ -67,7 +68,6 @@ def build_category_prompt(categories: tuple[CategoryDefinition, ...]) -> str:
 
     lines = [
         "Classify this travel photo into exactly one configured category.",
-        "The image may represent an entire cluster of similar photos, so choose the single best category for the cluster.",
         "Use the category rules below exactly as guidance.",
     ]
     for category in categories:
@@ -79,7 +79,7 @@ def build_category_prompt(categories: tuple[CategoryDefinition, ...]) -> str:
 
 
 def build_category_schema(categories: tuple[CategoryDefinition, ...]) -> dict:
-    """Return the strict schema for one cluster categorization response."""
+    """Return the strict schema for one categorization response."""
 
     return {
         "type": "object",
@@ -96,7 +96,7 @@ def build_category_schema(categories: tuple[CategoryDefinition, ...]) -> dict:
 
 
 class OpenAIClusterCategorizer:
-    """OpenAI-backed categorizer for one representative image per cluster."""
+    """OpenAI-backed categorizer for one representative image per burst group."""
 
     def __init__(self, api_key: str, model_name: str) -> None:
         if AsyncOpenAI is None:
@@ -110,6 +110,7 @@ class OpenAIClusterCategorizer:
         self,
         day_name: str,
         cluster: dict,
+        burst_group_id: str,
         image_path: Path,
         categorization_settings: CategorizationSettings,
     ) -> ClusterCategorizationResult:
@@ -130,7 +131,11 @@ class OpenAIClusterCategorizer:
                         },
                         {
                             "type": "input_text",
-                            "text": f"Day: {day_name}\nCluster: {cluster['cluster_id']}",
+                            "text": (
+                                f"Day: {day_name}\n"
+                                f"Cluster: {cluster['cluster_id']}\n"
+                                f"Burst group: {burst_group_id}"
+                            ),
                         },
                         image_input,
                     ],
@@ -159,7 +164,7 @@ def run_cluster_categorization(
     settings: AppSettings,
     categorizer: ClusterCategorizer | None = None,
 ) -> CategorizationRunSummary:
-    """Classify cleaned clusters and move accepted photos into per-day category folders."""
+    """Classify cleaned burst groups and move accepted photos into per-day category folders."""
 
     stage_started_at = perf_counter()
     if not settings.categorization_settings.enabled:
@@ -207,14 +212,21 @@ def _categorize_day(
     categorizer: ClusterCategorizer,
 ) -> CategorizationRunSummary:
     payload = load_cluster_manifest(day_path)
+    burst_groups_by_id = {
+        burst_group["burst_group_id"]: burst_group for burst_group in payload["burst_groups"]
+    }
     cluster_candidates = [
-        (cluster, _choose_classification_member(cluster, accepted_members))
+        (cluster, burst_group_id, source_member)
         for cluster in payload["clusters"]
-        if (accepted_members := _accepted_cluster_members(cluster, settings))
+        for burst_group_id, source_member in _choose_burst_classification_members(
+            cluster,
+            _accepted_cluster_members(cluster, settings),
+            burst_groups_by_id,
+        )
     ]
-    LOGGER.info("Categorizing %s clusters for %s", len(cluster_candidates), day_path.name)
+    LOGGER.info("Categorizing %s burst groups for %s", len(cluster_candidates), day_path.name)
     try:
-        cluster_results, retry_count = asyncio.run(
+        burst_results, retry_count = asyncio.run(
             _collect_cluster_results_async(
                 day_path=day_path,
                 cluster_candidates=cluster_candidates,
@@ -226,27 +238,28 @@ def _categorize_day(
         LOGGER.error("Categorization failed for %s: %s", day_path.name, exc)
         raise
 
-    photos_moved = _move_cluster_members_to_category_folders(day_path, payload, cluster_results, settings)
+    photos_moved = _move_cluster_members_to_category_folders(day_path, payload, burst_results, settings)
     rewritten_payload = _rewrite_categorized_manifest_payload(
         payload=payload,
         day_name=day_path.name,
-        cluster_results=cluster_results,
+        burst_results=burst_results,
         settings=settings,
     )
     manifest_path = day_path / "cluster_manifest.json"
     manifest_path.write_text(json.dumps(rewritten_payload, indent=2), encoding="utf-8")
 
     LOGGER.info(
-        "Categorized %s: clusters=%s photos_moved=%s retries=%s concurrency_limit=%s",
+        "Categorized %s: clusters=%s burst_groups=%s photos_moved=%s retries=%s concurrency_limit=%s",
         day_path.name,
-        len(cluster_results),
+        _classified_cluster_count(payload, burst_results),
+        len(burst_results),
         photos_moved,
         retry_count,
         _categorization_request_limit(settings),
     )
     return CategorizationRunSummary(
         categorized_days=1,
-        classified_clusters=len(cluster_results),
+        classified_clusters=_classified_cluster_count(payload, burst_results),
         photos_moved=photos_moved,
         manifests_rewritten=1,
     )
@@ -254,11 +267,11 @@ def _categorize_day(
 
 async def _collect_cluster_results_async(
     day_path: Path,
-    cluster_candidates: list[tuple[dict, dict]],
+    cluster_candidates: list[tuple[dict, str, dict]],
     settings: AppSettings,
     categorizer: ClusterCategorizer,
-) -> tuple[dict[str, tuple[ClusterCategorizationResult, str]], int]:
-    """Collect cluster categorization results concurrently before mutating the filesystem."""
+) -> tuple[dict[tuple[str, str], tuple[ClusterCategorizationResult, str]], int]:
+    """Collect burst categorization results concurrently before mutating the filesystem."""
 
     concurrency_limit = _categorization_request_limit(settings)
     semaphore = asyncio.Semaphore(concurrency_limit)
@@ -267,21 +280,22 @@ async def _collect_cluster_results_async(
             _categorize_cluster_candidate_async(
                 day_name=day_path.name,
                 cluster=cluster,
+                burst_group_id=burst_group_id,
                 source_member=source_member,
                 settings=settings,
                 categorizer=categorizer,
                 semaphore=semaphore,
             )
         )
-        for cluster, source_member in cluster_candidates
+        for cluster, burst_group_id, source_member in cluster_candidates
     ]
-    cluster_results: dict[str, tuple[ClusterCategorizationResult, str]] = {}
+    burst_results: dict[tuple[str, str], tuple[ClusterCategorizationResult, str]] = {}
     retry_count = 0
     completed_count = 0
     try:
         for task in asyncio.as_completed(tasks):
-            cluster_id, result, source_filename, retries_used = await task
-            cluster_results[cluster_id] = (result, source_filename)
+            cluster_id, burst_group_id, result, source_filename, retries_used = await task
+            burst_results[(cluster_id, burst_group_id)] = (result, source_filename)
             retry_count += retries_used
             completed_count += 1
             log_progress(
@@ -289,7 +303,7 @@ async def _collect_cluster_results_async(
                 "Categorizing",
                 completed_count,
                 len(cluster_candidates),
-                noun="cluster",
+                noun="burst group",
                 interval=settings.categorization_concurrency_settings.progress_log_interval,
             )
     except Exception:
@@ -297,18 +311,19 @@ async def _collect_cluster_results_async(
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
         raise
-    return cluster_results, retry_count
+    return burst_results, retry_count
 
 
 async def _categorize_cluster_candidate_async(
     day_name: str,
     cluster: dict,
+    burst_group_id: str,
     source_member: dict,
     settings: AppSettings,
     categorizer: ClusterCategorizer,
     semaphore: asyncio.Semaphore,
-) -> tuple[str, ClusterCategorizationResult, str, int]:
-    """Categorize one cluster representative with retry and bounded concurrency."""
+) -> tuple[str, str, ClusterCategorizationResult, str, int]:
+    """Categorize one burst representative with retry and bounded concurrency."""
 
     async with semaphore:
         image_path = (settings.root_path / source_member["relative_path"]).resolve()
@@ -316,20 +331,22 @@ async def _categorize_cluster_candidate_async(
             categorizer=categorizer,
             day_name=day_name,
             cluster=cluster,
+            burst_group_id=burst_group_id,
             image_path=image_path,
             settings=settings,
         )
-    return cluster["cluster_id"], result, source_member["filename"], retries_used
+    return cluster["cluster_id"], burst_group_id, result, source_member["filename"], retries_used
 
 
 async def _categorize_cluster_with_retries(
     categorizer: ClusterCategorizer,
     day_name: str,
     cluster: dict,
+    burst_group_id: str,
     image_path: Path,
     settings: AppSettings,
 ) -> tuple[ClusterCategorizationResult, int]:
-    """Categorize one cluster representative, retrying only transient OpenAI failures."""
+    """Categorize one burst representative, retrying only transient OpenAI failures."""
 
     retries_used = 0
     concurrency_settings = settings.categorization_concurrency_settings
@@ -338,6 +355,7 @@ async def _categorize_cluster_with_retries(
             result = await categorizer.acategorize_cluster(
                 day_name=day_name,
                 cluster=cluster,
+                burst_group_id=burst_group_id,
                 image_path=image_path,
                 categorization_settings=settings.categorization_settings,
             )
@@ -348,14 +366,15 @@ async def _categorize_cluster_with_retries(
             retries_used += 1
             delay_seconds = concurrency_settings.initial_retry_delay_seconds * (2**attempt)
             LOGGER.warning(
-                "Retrying cluster categorization for %s in %s after %s: %s",
+                "Retrying burst group categorization for %s/%s in %s after %s: %s",
                 cluster["cluster_id"],
+                burst_group_id,
                 day_name,
                 f"{delay_seconds:.2f}s",
                 exc,
             )
             await asyncio.sleep(delay_seconds)
-    raise RuntimeError(f"Unreachable categorization retry state for {cluster['cluster_id']}")
+    raise RuntimeError(f"Unreachable categorization retry state for {cluster['cluster_id']}/{burst_group_id}")
 
 
 def _categorization_request_limit(settings: AppSettings) -> int:
@@ -395,31 +414,52 @@ def _accepted_cluster_members(cluster: dict, settings: AppSettings) -> list[dict
     ]
 
 
-def _choose_classification_member(cluster: dict, accepted_members: list[dict]) -> dict:
+def _choose_burst_classification_members(
+    cluster: dict,
+    accepted_members: list[dict],
+    burst_groups_by_id: dict[str, dict],
+) -> list[tuple[str, dict]]:
+    members_by_burst_group_id: dict[str, list[dict]] = {}
     for member in accepted_members:
-        if member["filename"] == cluster["representative_filename"]:
-            return member
-    return sorted(accepted_members, key=lambda member: member["relative_path"])[0]
+        members_by_burst_group_id.setdefault(member["burst_group_id"], []).append(member)
+
+    selected_members: list[tuple[str, dict]] = []
+    for burst_group_id in cluster["burst_group_ids"]:
+        burst_members = members_by_burst_group_id.get(burst_group_id, [])
+        if not burst_members:
+            continue
+        representative_filename = burst_groups_by_id.get(burst_group_id, {}).get("representative_filename")
+        selected_member = next(
+            (
+                member
+                for member in burst_members
+                if representative_filename is not None and member["filename"] == representative_filename
+            ),
+            None,
+        )
+        if selected_member is None:
+            selected_member = sorted(burst_members, key=lambda member: member["relative_path"])[0]
+        selected_members.append((burst_group_id, selected_member))
+    return selected_members
 
 
 def _move_cluster_members_to_category_folders(
     day_path: Path,
     payload: dict,
-    cluster_results: dict[str, tuple[ClusterCategorizationResult, str]],
+    burst_results: dict[tuple[str, str], tuple[ClusterCategorizationResult, str]],
     settings: AppSettings,
 ) -> int:
     """Move accepted cluster members into their per-day category folders."""
 
     moved_count = 0
     for cluster in payload["clusters"]:
-        categorization = cluster_results.get(cluster["cluster_id"])
-        if categorization is None:
-            continue
-        category_name = categorization[0].category_name
-        destination_dir = day_path / category_name
-        destination_dir.mkdir(parents=True, exist_ok=True)
-
         for member in _accepted_cluster_members(cluster, settings):
+            categorization = burst_results.get((cluster["cluster_id"], member["burst_group_id"]))
+            if categorization is None:
+                continue
+            category_name = categorization[0].category_name
+            destination_dir = day_path / category_name
+            destination_dir.mkdir(parents=True, exist_ok=True)
             source_path = (settings.root_path / member["relative_path"]).resolve()
             destination_path = (destination_dir / member["filename"]).resolve()
             if source_path == destination_path:
@@ -434,59 +474,106 @@ def _move_cluster_members_to_category_folders(
 def _rewrite_categorized_manifest_payload(
     payload: dict,
     day_name: str,
-    cluster_results: dict[str, tuple[ClusterCategorizationResult, str]],
+    burst_results: dict[tuple[str, str], tuple[ClusterCategorizationResult, str]],
     settings: AppSettings,
 ) -> dict:
     """Rewrite a day manifest so accepted members live under category folders."""
 
     category_counts: dict[str, int] = {}
+    categorized_burst_group_count = 0
     rewritten_clusters: list[dict] = []
     for cluster in payload["clusters"]:
-        categorization = cluster_results.get(cluster["cluster_id"])
-        if categorization is None:
+        burst_group_categories = []
+        for burst_group_id in cluster["burst_group_ids"]:
+            categorization = burst_results.get((cluster["cluster_id"], burst_group_id))
+            if categorization is None:
+                continue
+            result, source_filename = categorization
+            categorized_burst_group_count += 1
+            burst_group_categories.append(
+                {
+                    "burst_group_id": burst_group_id,
+                    "category_name": result.category_name,
+                    "classification_rationale": result.rationale,
+                    "classification_source_filename": source_filename,
+                    "classification_model_name": result.model_name,
+                    "classification_response_id": result.response_id,
+                }
+            )
+        if not burst_group_categories:
             continue
-        result, source_filename = categorization
         rewritten_members = []
         for member in _accepted_cluster_members(cluster, settings):
+            categorization = burst_results.get((cluster["cluster_id"], member["burst_group_id"]))
+            if categorization is None:
+                continue
+            result = categorization[0]
             rewritten_relative_path = str(Path(day_name) / result.category_name / member["filename"])
             rewritten_members.append(
                 {
                     **member,
                     "relative_path": rewritten_relative_path,
+                    "category_name": result.category_name,
                 }
             )
+            category_counts[result.category_name] = category_counts.get(result.category_name, 0) + 1
         if not rewritten_members:
             continue
-        category_counts[result.category_name] = category_counts.get(result.category_name, 0) + len(rewritten_members)
+        cluster_payload = _strip_cluster_level_categorization_fields(cluster)
         rewritten_clusters.append(
             {
-                **cluster,
-                "category_name": result.category_name,
-                "classification_rationale": result.rationale,
-                "classification_source_filename": source_filename,
-                "classification_model_name": result.model_name,
-                "classification_response_id": result.response_id,
+                **cluster_payload,
+                "member_filenames": [member["filename"] for member in rewritten_members],
+                "member_count": len(rewritten_members),
+                "burst_group_categories": burst_group_categories,
                 "members": rewritten_members,
             }
         )
 
     return {
         "day_name": day_name,
-        "manifest_version": max(int(payload.get("manifest_version", 1)), 2),
+        "manifest_version": max(int(payload.get("manifest_version", 1)), 3),
         "summary": {
-            "accepted_photo_count": sum(cluster["member_count"] for cluster in rewritten_clusters),
+            "accepted_photo_count": sum(len(cluster["members"]) for cluster in rewritten_clusters),
             "burst_group_count": len(payload["burst_groups"]),
             "cluster_count": len(rewritten_clusters),
             "singleton_cluster_count": sum(
-                1 for cluster in rewritten_clusters if cluster["member_count"] == 1
+                1 for cluster in rewritten_clusters if len(cluster["members"]) == 1
             ),
             "categorized_cluster_count": len(rewritten_clusters),
+            "categorized_burst_group_count": categorized_burst_group_count,
             "category_counts": category_counts,
         },
         "burst_groups": payload["burst_groups"],
         "clusters": rewritten_clusters,
         "generated_from": payload["generated_from"],
     }
+
+
+def _classified_cluster_count(
+    payload: dict,
+    burst_results: dict[tuple[str, str], tuple[ClusterCategorizationResult, str]],
+) -> int:
+    return sum(
+        1
+        for cluster in payload["clusters"]
+        if any(
+            (cluster["cluster_id"], burst_group_id) in burst_results
+            for burst_group_id in cluster["burst_group_ids"]
+        )
+    )
+
+
+def _strip_cluster_level_categorization_fields(cluster: dict) -> dict:
+    old_categorization_fields = {
+        "category_name",
+        "classification_rationale",
+        "classification_source_filename",
+        "classification_model_name",
+        "classification_response_id",
+        "burst_group_categories",
+    }
+    return {key: value for key, value in cluster.items() if key not in old_categorization_fields}
 
 
 def _build_openai_image_input(
